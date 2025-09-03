@@ -1,3 +1,4 @@
 openai
 sqlalchemy==2.0.*
 fastapi[standard]
+celery[redis]

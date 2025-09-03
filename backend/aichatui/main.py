@@ -1,9 +1,10 @@
-from fastapi import Depends, FastAPI, HTTPException, Response
+from celery import Celery
+from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import joinedload
 
-from aichatui.models import BaseModel, Provider, Model
+from aichatui.models import BaseModel, Provider, Model, Chat, ChatMessage
 from aichatui.requests_responses import (
     ChatRequest, 
     ModelResponse,
@@ -11,12 +12,19 @@ from aichatui.requests_responses import (
     ProviderResponse, 
     ProviderRequest, 
 )
+from aichatui.tasks import run_chat_completion
+from aichatui.celery_utils import create_celery
 import aichatui.services.openai
 
 engine = create_engine("sqlite:///sqlite.db", echo=True)
 session = Session(engine)
 
 app = FastAPI()
+
+
+
+# celery_app = Celery("worker", broker="redis://redis:6379/0", backend="redis://redis:6379/0")
+celery_app = create_celery()
 
 @app.on_event("startup")
 def on_startup():
@@ -130,6 +138,72 @@ def model_delete(model_id: int, db: Session = Depends(get_db)):
     return Response(status_code=204)
 
 
+
+# TODO POST chats/
+# TODO GET  chats/
+# TODO GET  chats/<id>
+# TODO POST chats/<id>/messages
+# TODO POST chats/<id>/stream
+
+
+@app.get("/chats")
+def chats_list(db: Session = Depends(get_db)):
+    return []
+
+
+@app.post("/chats")
+def chat_post(chat_request: ChatRequest, db: Session = Depends(get_db)):
+    if chat_request.chat_id:
+        chat = db.get(Chat, chat_request.chat_id)
+    else:
+        chat = Chat()
+        db.add(chat)
+        db.flush()
+
+    user_message = ChatMessage(
+        chat_id=chat.id,
+        role=ChatMessage.ROLE_USER,
+        message=chat_request.message,
+        status=ChatMessage.STATUS_COMPLETED
+    )
+    db.add(user_message)
+
+    assistant_message = ChatMessage(
+        chat_id=chat.id,
+        role=ChatMessage.ROLE_ASSISTANT,
+        message="",
+        status=ChatMessage.STATUS_GENERATING,
+        model_id=chat_request.model_id,
+    )
+    db.add(assistant_message)
+    chat.messages.append(user_message)
+    db.commit()
+
+    task = run_chat_completion.delay(
+        user_message_id=user_message.id,
+        assistant_message_id=assistant_message.id
+    )
+    assistant_message.task_id = task.id
+    db.commit()
+
+    return {"chat_id": chat.id, "message_id": assistant_message.id}
+
+
+@app.get("/chats/{chat_id}")
+def chat_details(request: Request, chat_id: int, db: Session = Depends(get_db)):
+    return {}
+
+
+@app.get("/chats/{chat_id}/messages")
+def chat_messages(request: Request, chat_id: int, db: Session = Depends(get_db)):
+    return {}
+
+
+@app.get("/chats/{chat_id}/stream")
+async def chat_stream(request: Request, chat_id: int, db: Session = Depends(get_db)):
+    return ''
+
+
 @app.post("/chat-completion")
 def chat_completion(chat_request: ChatRequest, db: Session = Depends(get_db)):
     model = db.get(Model, chat_request.model_id, options=[joinedload(Model.provider)])
@@ -137,7 +211,12 @@ def chat_completion(chat_request: ChatRequest, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Model not found")
 
     # TODO make into actual web socket stream
-    stream = aichatui.services.openai.query(model=model, query=chat_request.message)
-    stream = list(stream)
-    stream = "".join(stream)
-    return {"message": stream}
+    # stream = aichatui.services.openai.query(model=model, query=chat_request.message)
+    # stream = list(stream)
+    # print(stream)
+    # stream = "".join(stream)
+    task = run_chat_completion.delay(chat_request.model_id, chat_request.message)
+
+
+    return {"message": task.id}
+    return {"message": "test"}
