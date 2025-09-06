@@ -15,7 +15,7 @@ from aichatui.requests_responses import (
 )
 from aichatui.tasks import run_chat_completion
 from aichatui.celery_utils import create_celery
-
+import aichatui.services.chat
 
 app = FastAPI()
 celery_app = create_celery()
@@ -134,39 +134,10 @@ def chats_list(db: Session = Depends(get_db)):
 
 @app.post("/chats")
 def chat_post(chat_request: ChatRequest, db: Session = Depends(get_db)):
-    if chat_request.chat_id:
-        chat = db.get(Chat, chat_request.chat_id)
-    else:
-        chat = Chat()
-        db.add(chat)
-        db.flush()
-
-    user_message = ChatMessage(
-        chat_id=chat.id,
-        role=ChatMessage.ROLE_USER,
-        message=chat_request.message,
-        status=ChatMessage.STATUS_COMPLETED
+    assistant_message = aichatui.services.chat.new_message(
+        chat_request=chat_request,
+        db=db
     )
-    db.add(user_message)
-
-    assistant_message = ChatMessage(
-        chat_id=chat.id,
-        role=ChatMessage.ROLE_ASSISTANT,
-        message="",
-        status=ChatMessage.STATUS_GENERATING,
-        model_id=chat_request.model_id,
-    )
-    db.add(assistant_message)
-    chat.messages.append(user_message)
-    db.commit()
-
-    task = run_chat_completion.delay(
-        user_message_id=user_message.id,
-        assistant_message_id=assistant_message.id
-    )
-    assistant_message.task_id = task.id
-    db.commit()
-
     return ChatMessageResponse.model_validate(assistant_message)
 
 

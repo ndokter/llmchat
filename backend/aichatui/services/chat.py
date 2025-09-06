@@ -1,29 +1,13 @@
-from celery import Celery
-from fastapi import Depends, FastAPI, HTTPException, Request, Response
-from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
-from sqlalchemy.orm import joinedload
 
-from aichatui.models import BaseModel, Provider, Model, Chat, ChatMessage
-from aichatui.requests_responses import (
-    ChatRequest, 
-    ChatMessageResponse,
-    ModelResponse,
-    ModelRequest,
-    ProviderResponse, 
-    ProviderRequest, 
-)
+from aichatui.models import Chat, ChatMessage
+
 from aichatui.tasks import run_chat_completion
-from aichatui.celery_utils import create_celery
-import aichatui.services.openai
 
-def new_message(chat=None, ):
-    if not chat:
-        chat = Chat()
-        db.add(chat)
-        db.flush()
 
-        if chat_request.chat_id:
+# TODO improve args
+def new_message(chat_request, db: Session):
+    if chat_request.chat_id:
         chat = db.get(Chat, chat_request.chat_id)
     else:
         chat = Chat()
@@ -55,3 +39,5 @@ def new_message(chat=None, ):
     )
     assistant_message.task_id = task.id
     db.commit()
+
+    return assistant_message
