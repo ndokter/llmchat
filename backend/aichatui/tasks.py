@@ -1,4 +1,3 @@
-# aichatui/tasks.py
 from celery import shared_task
 
 from aichatui.database import db_session
@@ -20,6 +19,8 @@ def run_chat_completion(user_message_id, assistant_message_id):
         stream = list(stream)
         print(stream)
         stream = "".join(stream)
+
+        # user_message = 
 
         assistant_message.message = stream
         assistant_message.status = ChatMessage.STATUS_COMPLETED

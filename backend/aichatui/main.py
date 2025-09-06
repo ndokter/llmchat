@@ -1,10 +1,11 @@
+from contextlib import asynccontextmanager
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import joinedload
 
-from aichatui.database import get_db
-from aichatui.models import Provider, Model, Chat, ChatMessage
+from aichatui.database import get_db, engine
+from aichatui.models import BaseModel, Provider, Model, Chat, ChatMessage
 from aichatui.requests_responses import (
     ChatRequest, 
     ChatMessageResponse,
@@ -17,7 +18,12 @@ from aichatui.tasks import run_chat_completion
 from aichatui.celery_utils import create_celery
 import aichatui.services.chat
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    BaseModel.metadata.create_all(bind=engine)
+    yield
+
+app = FastAPI(lifespan=lifespan)
 celery_app = create_celery()
 
 
@@ -133,11 +139,14 @@ def chats_list(db: Session = Depends(get_db)):
 
 
 @app.post("/chats")
-def chat_post(chat_request: ChatRequest, db: Session = Depends(get_db)):
+def chat_new_message(chat_request: ChatRequest, db: Session = Depends(get_db)):
     assistant_message = aichatui.services.chat.new_message(
-        chat_request=chat_request,
+        chat_id=chat_request.chat_id, 
+        model_id=chat_request.model_id, 
+        message=chat_request.message,
         db=db
     )
+
     return ChatMessageResponse.model_validate(assistant_message)
 
 
@@ -154,21 +163,3 @@ def chat_messages(request: Request, chat_id: int, db: Session = Depends(get_db))
 @app.get("/chats/{chat_id}/stream")
 async def chat_stream(request: Request, chat_id: int, db: Session = Depends(get_db)):
     return ''
-
-
-@app.post("/chat-completion")
-def chat_completion(chat_request: ChatRequest, db: Session = Depends(get_db)):
-    model = db.get(Model, chat_request.model_id, options=[joinedload(Model.provider)])
-    if not model:
-        raise HTTPException(status_code=404, detail="Model not found")
-
-    # TODO make into actual web socket stream
-    # stream = aichatui.services.openai.query(model=model, query=chat_request.message)
-    # stream = list(stream)
-    # print(stream)
-    # stream = "".join(stream)
-    task = run_chat_completion.delay(chat_request.model_id, chat_request.message)
-
-
-    return {"message": task.id}
-    return {"message": "test"}

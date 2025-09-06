@@ -5,10 +5,9 @@ from aichatui.models import Chat, ChatMessage
 from aichatui.tasks import run_chat_completion
 
 
-# TODO improve args
-def new_message(chat_request, db: Session):
-    if chat_request.chat_id:
-        chat = db.get(Chat, chat_request.chat_id)
+def new_message(chat_id, model_id, message, db: Session):
+    if chat_id:
+        chat = db.get(Chat, chat_id)
     else:
         chat = Chat()
         db.add(chat)
@@ -17,7 +16,7 @@ def new_message(chat_request, db: Session):
     user_message = ChatMessage(
         chat_id=chat.id,
         role=ChatMessage.ROLE_USER,
-        message=chat_request.message,
+        message=message,
         status=ChatMessage.STATUS_COMPLETED
     )
     db.add(user_message)
@@ -27,7 +26,7 @@ def new_message(chat_request, db: Session):
         role=ChatMessage.ROLE_ASSISTANT,
         message="",
         status=ChatMessage.STATUS_GENERATING,
-        model_id=chat_request.model_id,
+        model_id=model_id,
     )
     db.add(assistant_message)
     chat.messages.append(user_message)

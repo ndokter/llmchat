@@ -65,7 +65,9 @@ class ChatMessage(BaseModel):
     chat_id: Mapped[int] = mapped_column(ForeignKey("chat.id"))
     chat: Mapped["Chat"] = relationship(back_populates="messages")
 
-    # Role assistant specific fields
+    token_count: Mapped[Optional[int]] = mapped_column()
+
+    # Assistant role specific fields
     model_id: Mapped[Optional[int]] = mapped_column(ForeignKey("model.id"))
     model: Mapped[Optional["Model"]] = relationship()
     task_id:  Mapped[Optional[str]] = mapped_column(String(36))
