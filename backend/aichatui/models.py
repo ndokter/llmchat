@@ -2,15 +2,15 @@ from typing import List
 from typing import Optional
 import datetime
 
+from aichatui.database import Base
 from sqlalchemy import ForeignKey, String
-from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import mapped_column
 from sqlalchemy.orm import relationship
 
 
-class BaseModel(DeclarativeBase):
-    pass
+class BaseModel(Base):
+    __abstract__ = True
 
 
 class Provider(BaseModel):

@@ -1,12 +1,13 @@
-from celery import Celery
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
-from sqlalchemy import create_engine, select
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import joinedload
 
-from aichatui.models import BaseModel, Provider, Model, Chat, ChatMessage
+from aichatui.database import get_db
+from aichatui.models import Provider, Model, Chat, ChatMessage
 from aichatui.requests_responses import (
     ChatRequest, 
+    ChatMessageResponse,
     ModelResponse,
     ModelRequest,
     ProviderResponse, 
@@ -14,30 +15,10 @@ from aichatui.requests_responses import (
 )
 from aichatui.tasks import run_chat_completion
 from aichatui.celery_utils import create_celery
-import aichatui.services.openai
 
-engine = create_engine("sqlite:///sqlite.db", echo=True)
-session = Session(engine)
 
 app = FastAPI()
-
-
-
-# celery_app = Celery("worker", broker="redis://redis:6379/0", backend="redis://redis:6379/0")
 celery_app = create_celery()
-
-@app.on_event("startup")
-def on_startup():
-    # Create db and tables
-    BaseModel.metadata.create_all(engine)
-
-
-def get_db():
-    db = Session(engine)
-    try:
-        yield db
-    finally:
-        db.close()
 
 
 @app.get("/providers", response_model=list[ProviderResponse])
@@ -186,7 +167,7 @@ def chat_post(chat_request: ChatRequest, db: Session = Depends(get_db)):
     assistant_message.task_id = task.id
     db.commit()
 
-    return {"chat_id": chat.id, "message_id": assistant_message.id}
+    return ChatMessageResponse.model_validate(assistant_message)
 
 
 @app.get("/chats/{chat_id}")

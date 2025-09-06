@@ -1,5 +1,10 @@
+import datetime
 from typing import Optional
-from pydantic import BaseModel
+from pydantic import BaseModel as PydanticBaseModel, ConfigDict
+
+
+class BaseModel(PydanticBaseModel):
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ChatRequest(BaseModel):
@@ -39,3 +44,26 @@ class ModelRequest(BaseModel):
     system_prompt: Optional[str] = None
     provider_id: int
 
+
+
+class ChatResponse(BaseModel):
+    id: int
+    title: str
+    
+    # messages: Mapped[list["ChatMessage"]] = relationship(
+    #     "ChatMessage", 
+    #     back_populates="chat",
+    #     cascade="all, delete-orphan"
+    # )
+
+
+class ChatMessageResponse(BaseModel):
+    id: int
+    role: str
+    message: str
+    status: str
+    created_at: datetime.datetime
+
+    chat_id: int
+    model_id: int
+    task_id: str
