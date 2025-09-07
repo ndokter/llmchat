@@ -138,16 +138,16 @@ def chats_list(db: Session = Depends(get_db)):
     return []
 
 
-@app.post("/chats")
+@app.post("/chats", response_model=ChatMessageResponse)
 def chat_new_message(chat_request: ChatRequest, db: Session = Depends(get_db)):
     assistant_message = aichatui.services.chat.new_message(
+        db=db,
         chat_id=chat_request.chat_id, 
         model_id=chat_request.model_id, 
         message=chat_request.message,
-        db=db
     )
 
-    return ChatMessageResponse.model_validate(assistant_message)
+    return assistant_message
 
 
 @app.get("/chats/{chat_id}")
