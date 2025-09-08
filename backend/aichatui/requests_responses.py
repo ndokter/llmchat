@@ -61,7 +61,9 @@ class ChatMessageResponse(BaseModel):
     role: str
     message: str
     status: str
-    token_count: int|None
+    prompt_tokens: int|None
+    completion_tokens: int|None
+    total_tokens: int|None
     created_at: datetime.datetime
 
     chat_id: int

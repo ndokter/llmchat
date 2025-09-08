@@ -1,7 +1,6 @@
 from sqlalchemy.orm import Session
 
 from aichatui.models import Chat, ChatMessage
-
 from aichatui.tasks import run_chat_completion
 
 
@@ -26,6 +25,7 @@ def new_message(db: Session, chat_id, model_id, message):
         status=ChatMessage.STATUS_GENERATING,
         model_id=model_id,
     )
+    assistant_message.parent = user_message
 
     db.add(user_message)
     db.add(assistant_message)
@@ -33,11 +33,7 @@ def new_message(db: Session, chat_id, model_id, message):
     chat.messages.append(assistant_message)
     db.commit()
 
-    task = run_chat_completion.delay(
-        chat_id=chat_id,
-        user_message_id=user_message.id,
-        assistant_message_id=assistant_message.id
-    )
+    task = run_chat_completion.delay(assistant_message_id=assistant_message.id)
     assistant_message.task_id = task.id
     db.commit()
 

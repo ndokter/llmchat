@@ -2,11 +2,10 @@ from typing import List
 from typing import Optional
 import datetime
 
-from aichatui.database import Base
 from sqlalchemy import ForeignKey, String
-from sqlalchemy.orm import Mapped
-from sqlalchemy.orm import mapped_column
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from aichatui.database import Base
 
 
 class BaseModel(Base):
@@ -62,12 +61,23 @@ class ChatMessage(BaseModel):
     status: Mapped[str] = mapped_column(String(20))
     created_at: Mapped[datetime.datetime] = mapped_column(default=datetime.datetime.utcnow)
 
-    chat_id: Mapped[int] = mapped_column(ForeignKey("chat.id"))
-    chat: Mapped["Chat"] = relationship(back_populates="messages")
-
-    token_count: Mapped[Optional[int]] = mapped_column()
-
     # Assistant role specific fields
+    prompt_tokens: Mapped[Optional[int]] = mapped_column()
+    completion_tokens: Mapped[Optional[int]] = mapped_column()
+    total_tokens: Mapped[Optional[int]] = mapped_column()
+
     model_id: Mapped[Optional[int]] = mapped_column(ForeignKey("model.id"))
     model: Mapped[Optional["Model"]] = relationship()
     task_id:  Mapped[Optional[str]] = mapped_column(String(36))
+
+    # Relations
+    chat_id: Mapped[int] = mapped_column(ForeignKey("chat.id"))
+    chat: Mapped["Chat"] = relationship(back_populates="messages")
+    parent_id: Mapped[Optional[int]] = mapped_column(ForeignKey("chat_message.id"))
+    parent: Mapped[Optional["ChatMessage"]] = relationship(
+        remote_side=[id], 
+        back_populates="children"
+    )
+    children: Mapped[List["ChatMessage"]] = relationship(
+        back_populates="parent"
+    )

@@ -3,24 +3,25 @@ from celery import shared_task
 from sqlalchemy.orm import joinedload
 
 from aichatui.database import db_session
-from aichatui.models import Chat, ChatMessage
+from aichatui.models import ChatMessage
 import aichatui.services.openai
 
 
 @shared_task
-def run_chat_completion(chat_id, user_message_id, assistant_message_id):
+def run_chat_completion(assistant_message_id):
 
     with db_session() as db:
-        chat = db.query(Chat).options(joinedload(Chat.messages)).get(chat_id)
-        user_message = db.get(ChatMessage, user_message_id)
-        assistant_message = db.get(ChatMessage, assistant_message_id)
+        assistant_message = db.query(ChatMessage) \
+            .options(joinedload(ChatMessage.parent),
+                     joinedload(ChatMessage.chat)) \
+            .filter(ChatMessage.id == assistant_message_id) \
+            .first()
+        chat = assistant_message.chat
 
         events = aichatui.services.openai.query(
             model=assistant_message.model, 
-            messages=[
-                {'role': message.role, 'content': message.message}
-                for message in chat.messages
-            ]
+            messages=[{'role': message.role, 'content': message.message}
+                      for message in chat.messages]
         )
 
         event = None
@@ -36,10 +37,10 @@ def run_chat_completion(chat_id, user_message_id, assistant_message_id):
             db.commit()
             return
 
-        user_message.token_count = event.usage.prompt_tokens
         assistant_message.message = message
-        assistant_message.token_count = event.usage.completion_tokens
-        #assistant_message.token_count_total = event.usage.total_tokens
+        assistant_message.prompt_tokens = event.usage.completion_tokens
+        assistant_message.completion_tokens = event.usage.completion_tokens
+        assistant_message.total_tokens = event.usage.total_tokens
         
         assistant_message.status = ChatMessage.STATUS_COMPLETED
 
