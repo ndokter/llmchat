@@ -1,11 +1,15 @@
 from contextlib import asynccontextmanager
+import json
+
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from sqlalchemy import select
 from sqlalchemy.orm import Session
-from sqlalchemy.orm import joinedload
+from fastapi.responses import StreamingResponse
+import redis
 
+from aichatui.config import settings
 from aichatui.database import get_db, engine
-from aichatui.models import BaseModel, Provider, Model, Chat, ChatMessage
+from aichatui.models import BaseModel, Provider, Model, ChatMessage
 from aichatui.requests_responses import (
     ChatRequest, 
     ChatMessageResponse,
@@ -14,9 +18,10 @@ from aichatui.requests_responses import (
     ProviderResponse, 
     ProviderRequest, 
 )
-from aichatui.tasks import run_chat_completion
 from aichatui.celery_utils import create_celery
+from aichatui.services.redis import ChatMessageStreamConsumer
 import aichatui.services.chat
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -163,3 +168,33 @@ def chat_messages(request: Request, chat_id: int, db: Session = Depends(get_db))
 @app.get("/chats/{chat_id}/stream")
 async def chat_stream(request: Request, chat_id: int, db: Session = Depends(get_db)):
     return ''
+
+
+@app.get("/message/{assistant_message_id}/stream")
+async def chat_message_stream(request: Request, assistant_message_id: int, db: Session = Depends(get_db)):
+    chat_message = db.get(ChatMessage, assistant_message_id)
+    if chat_message.role != ChatMessage.ROLE_ASSISTANT \
+            or chat_message.status != ChatMessage.STATUS_GENERATING:
+        raise HTTPException(status_code=404, detail="Stream not found")
+
+    async def event_generator():
+        try:
+            async with ChatMessageStreamConsumer(
+                redis_url=settings.REDIS_URL,
+                channel_name=f'message-{assistant_message_id}'
+            ) as chat_channel:
+                async for message in chat_channel:
+                    if message:
+                        yield f"data: {json.dumps(message)}\n\n"
+                    else:
+                        yield ": keep-alive\n\n"
+
+        except Exception as e:
+            yield json.dumps({
+                "content": "An internal error occurred",
+                "status": "error"
+            })
+        finally:
+            yield f"data: {json.dumps({'content': '', 'status': 'done'})}\n\n"
+
+    return StreamingResponse(event_generator(), media_type="text/event-stream")

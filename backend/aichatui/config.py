@@ -12,6 +12,8 @@ class BaseConfig:
     CELERY_BROKER_URL: str = os.environ.get("CELERY_BROKER_URL", "redis://redis:6379/0")
     result_backend: str = os.environ.get("CELERY_RESULT_BACKEND", "redis://redis:6379/0")  
 
+    REDIS_URL: str = os.environ.get("REDIS_URL", "redis://redis:6379/0")
+
 
 class DevelopmentConfig(BaseConfig):
     pass
