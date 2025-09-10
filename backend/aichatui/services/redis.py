@@ -61,6 +61,12 @@ class ChatMessageStreamConsumer:
             block=self.block_ms
         )
 
+        # messages = await self.redis_client.xread(
+        #     {self.channel_name: self.last_id},
+        #     count=1,
+        #     block=self.block_ms
+        # )
+
         if not messages:
             return None
 

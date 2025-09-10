@@ -173,9 +173,10 @@ async def chat_stream(request: Request, chat_id: int, db: Session = Depends(get_
 @app.get("/message/{assistant_message_id}/stream")
 async def chat_message_stream(request: Request, assistant_message_id: int, db: Session = Depends(get_db)):
     chat_message = db.get(ChatMessage, assistant_message_id)
-    if chat_message.role != ChatMessage.ROLE_ASSISTANT \
+    if not chat_message \
+            or chat_message.role != ChatMessage.ROLE_ASSISTANT \
             or chat_message.status != ChatMessage.STATUS_GENERATING:
-        raise HTTPException(status_code=404, detail="Stream not found")
+        raise HTTPException(status_code=404, detail="Stream not available")
 
     async def event_generator():
         try:
