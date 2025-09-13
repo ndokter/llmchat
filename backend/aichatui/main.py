@@ -161,13 +161,15 @@ def chat_details(request: Request, chat_id: int, db: Session = Depends(get_db)):
 
 
 @app.get("/chats/{chat_id}/messages")
-def chat_messages(request: Request, chat_id: int, db: Session = Depends(get_db)):
+def chat_message_list(request: Request, chat_id: int, db: Session = Depends(get_db)):
     return {}
 
 
-@app.get("/chats/{chat_id}/stream")
-async def chat_stream(request: Request, chat_id: int, db: Session = Depends(get_db)):
-    return ''
+@app.get("/message/{message_id}", response_model=ChatMessageResponse)
+def chat_message_details(request: Request, message_id: int, db: Session = Depends(get_db)):
+    chat_message = db.get(ChatMessage, message_id)
+
+    return chat_message
 
 
 @app.get("/message/{assistant_message_id}/stream")
@@ -183,18 +185,15 @@ async def chat_message_stream(request: Request, assistant_message_id: int, db: S
             async with ChatMessageStreamConsumer(
                 redis_url=settings.REDIS_URL,
                 channel_name=f'message-{assistant_message_id}'
-            ) as chat_channel:
-                async for message in chat_channel:
+            ) as stream:
+                async for message in stream:
                     if message:
                         yield f"data: {json.dumps(message)}\n\n"
                     else:
                         yield ": keep-alive\n\n"
-
+  
         except Exception as e:
-            yield json.dumps({
-                "content": "An internal error occurred",
-                "status": "error"
-            })
+            yield f"data: {json.dumps({'content': 'Internal error', 'status': 'error'})}\n\n"
         finally:
             yield f"data: {json.dumps({'content': '', 'status': 'done'})}\n\n"
 

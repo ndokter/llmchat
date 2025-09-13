@@ -1,7 +1,6 @@
 import time
 from celery import shared_task
 from sqlalchemy.orm import joinedload
-import redis
 
 from aichatui.database import db_session
 from aichatui.models import ChatMessage
@@ -33,14 +32,13 @@ def run_chat_completion(assistant_message_id):
         with ChatMessageStreamProducer(
             redis_url=settings.REDIS_URL,
             channel_name=f'message-{assistant_message_id}'
-        ) as chat_channel:
-            # Stream events from inference provider
+        ) as stream:
             for event in events:
                 if content:= event.choices[0].delta.content:
                     message += content
 
                     # Put them on the a redis channel for live streaming
-                    chat_channel.add_message(content)
+                    stream.add_message(content)
 
         if not event:
             assistant_message.status = ChatMessage.STATUS_FAILED
