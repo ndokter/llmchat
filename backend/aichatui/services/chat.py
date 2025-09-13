@@ -4,7 +4,7 @@ from aichatui.models import Chat, ChatMessage
 from aichatui.tasks import run_chat_completion
 
 
-def new_message(db: Session, chat_id, model_id, message):
+def new_message(db: Session, chat_id, parent_id, model_id, message):
     if chat_id:
         chat = db.get(Chat, chat_id)
     else:
@@ -14,6 +14,7 @@ def new_message(db: Session, chat_id, model_id, message):
 
     user_message = ChatMessage(
         chat_id=chat.id,
+        parent_id=parent_id,
         role=ChatMessage.ROLE_USER,
         message=message,
         status=ChatMessage.STATUS_COMPLETED

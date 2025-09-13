@@ -3,15 +3,15 @@ import json
 
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from fastapi.responses import StreamingResponse
-import redis
 
 from aichatui.config import settings
 from aichatui.database import get_db, engine
-from aichatui.models import BaseModel, Provider, Model, ChatMessage
+from aichatui.models import BaseModel, Chat, Provider, Model, ChatMessage
 from aichatui.requests_responses import (
     ChatRequest, 
+    ChatResponse,
     ChatMessageResponse,
     ModelResponse,
     ModelRequest,
@@ -129,25 +129,17 @@ def model_delete(model_id: int, db: Session = Depends(get_db)):
     
     return Response(status_code=204)
 
-
-
-# TODO POST chats/
-# TODO GET  chats/
-# TODO GET  chats/<id>
-# TODO POST chats/<id>/messages
-# TODO POST chats/<id>/stream
-
-
 @app.get("/chats")
-def chats_list(db: Session = Depends(get_db)):
+async def chats_list(db: Session = Depends(get_db)):
     return []
 
 
 @app.post("/chats", response_model=ChatMessageResponse)
-def chat_new_message(chat_request: ChatRequest, db: Session = Depends(get_db)):
+async def chat_new_message(chat_request: ChatRequest, db: Session = Depends(get_db)):
     assistant_message = aichatui.services.chat.new_message(
         db=db,
-        chat_id=chat_request.chat_id, 
+        chat_id=chat_request.chat_id,
+        parent_id=chat_request.parent_id,
         model_id=chat_request.model_id, 
         message=chat_request.message,
     )
@@ -155,20 +147,24 @@ def chat_new_message(chat_request: ChatRequest, db: Session = Depends(get_db)):
     return assistant_message
 
 
-@app.get("/chats/{chat_id}")
-def chat_details(request: Request, chat_id: int, db: Session = Depends(get_db)):
-    return {}
+@app.get("/chats/{chat_id}", response_model=ChatResponse)
+async def chat_details(request: Request, chat_id: int, db: Session = Depends(get_db)):
+    chat = db.query(Chat) \
+        .options(joinedload(Chat.messages)) \
+        .filter(Chat.id == chat_id) \
+        .first()
+
+    return chat
 
 
 @app.get("/chats/{chat_id}/messages")
-def chat_message_list(request: Request, chat_id: int, db: Session = Depends(get_db)):
+async def chat_message_list(request: Request, chat_id: int, db: Session = Depends(get_db)):
     return {}
 
 
 @app.get("/message/{message_id}", response_model=ChatMessageResponse)
-def chat_message_details(request: Request, message_id: int, db: Session = Depends(get_db)):
+async def chat_message_details(request: Request, message_id: int, db: Session = Depends(get_db)):
     chat_message = db.get(ChatMessage, message_id)
-
     return chat_message
 
 
