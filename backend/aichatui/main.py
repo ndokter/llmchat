@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+import datetime
 import json
 
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
@@ -82,7 +83,8 @@ def provider_delete(provider_id: int, db: Session = Depends(get_db)):
 
 @app.get("/models", response_model=list[ModelResponse])
 def model_list(db: Session = Depends(get_db)):
-    models = db.scalars(select(Model)).all()
+    select_models = select(Model).where(Model.deleted_at == None)
+    models = db.scalars(select_models).all()
 
     return models
 
@@ -125,10 +127,12 @@ def model_delete(model_id: int, db: Session = Depends(get_db)):
     if not model:
         raise HTTPException(status_code=404, detail="Model not found")
 
-    db.delete(model)
+    model.deleted_at = datetime.datetime.now()
     db.commit()
     
     return Response(status_code=204)
+
+
 
 @app.get("/chats", response_model=list[ChatListResponse])
 async def chats_list(db: Session = Depends(get_db)):

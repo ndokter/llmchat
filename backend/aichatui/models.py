@@ -19,8 +19,7 @@ class Provider(BaseModel):
     api_key: Mapped[str]
 
     models: Mapped[List["Model"]] = relationship(
-        back_populates="provider", 
-        cascade="all, delete-orphan"
+        back_populates="provider"
     )
 
 
@@ -30,6 +29,7 @@ class Model(BaseModel):
     name: Mapped[str]
     alias: Mapped[str]
     system_prompt: Mapped[Optional[str]]
+    deleted_at: Mapped[Optional[datetime.datetime]]
 
     provider_id: Mapped[int] = mapped_column(ForeignKey("provider.id"))
     provider: Mapped["Provider"] = relationship(back_populates="models")
@@ -73,7 +73,7 @@ class ChatMessage(BaseModel):
     completion_tokens: Mapped[Optional[int]] = mapped_column()
     total_tokens: Mapped[Optional[int]] = mapped_column()
 
-    model_id: Mapped[Optional[int]] = mapped_column(ForeignKey("model.id", ondelete="SET NULL"))
+    model_id: Mapped[Optional[int]] = mapped_column(ForeignKey("model.id"))
     model: Mapped[Optional["Model"]] = relationship()
     task_id:  Mapped[Optional[str]] = mapped_column(String(36))
 
