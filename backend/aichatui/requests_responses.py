@@ -12,9 +12,6 @@ class ProviderResponse(BaseModel):
     url: str
     api_key: str
 
-    class Config:
-        from_attributes = True
-
 
 class ProviderRequest(BaseModel):
     url: str
@@ -27,9 +24,6 @@ class ModelResponse(BaseModel):
     alias: str
     system_prompt: Optional[str]
     provider_id: int
-
-    class Config:
-        from_attributes = True
 
 
 class ModelRequest(BaseModel):
@@ -64,9 +58,11 @@ class ChatRequest(BaseModel):
 
 class ChatResponse(BaseModel):
     id: int
-    title: str | None
+    title: Optional[str] = None
     
     messages: List[ChatMessageResponse] = []
 
-    class Config:
-        from_attributes = True
+
+class ChatListResponse(BaseModel):
+    id: int
+    title: Optional[str] = None

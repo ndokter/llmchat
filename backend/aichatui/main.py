@@ -12,6 +12,7 @@ from aichatui.models import BaseModel, Chat, Provider, Model, ChatMessage
 from aichatui.requests_responses import (
     ChatRequest, 
     ChatResponse,
+    ChatListResponse,
     ChatMessageResponse,
     ModelResponse,
     ModelRequest,
@@ -129,9 +130,10 @@ def model_delete(model_id: int, db: Session = Depends(get_db)):
     
     return Response(status_code=204)
 
-@app.get("/chats")
+@app.get("/chats", response_model=list[ChatListResponse])
 async def chats_list(db: Session = Depends(get_db)):
-    return []
+    chats = db.scalars(select(Chat)).all()
+    return chats
 
 
 @app.post("/chats", response_model=ChatMessageResponse)

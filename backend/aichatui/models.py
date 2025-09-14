@@ -18,7 +18,10 @@ class Provider(BaseModel):
     url: Mapped[str]
     api_key: Mapped[str]
 
-    models: Mapped[List["Model"]] = relationship(back_populates="provider", cascade="all, delete-orphan")
+    models: Mapped[List["Model"]] = relationship(
+        back_populates="provider", 
+        cascade="all, delete-orphan"
+    )
 
 
 class Model(BaseModel):
@@ -30,6 +33,10 @@ class Model(BaseModel):
 
     provider_id: Mapped[int] = mapped_column(ForeignKey("provider.id"))
     provider: Mapped["Provider"] = relationship(back_populates="models")
+
+    messages: Mapped[list["ChatMessage"]] = relationship(
+        back_populates="model"
+    )
 
 
 class Chat(BaseModel):
@@ -66,11 +73,11 @@ class ChatMessage(BaseModel):
     completion_tokens: Mapped[Optional[int]] = mapped_column()
     total_tokens: Mapped[Optional[int]] = mapped_column()
 
-    model_id: Mapped[Optional[int]] = mapped_column(ForeignKey("model.id"))
+    model_id: Mapped[Optional[int]] = mapped_column(ForeignKey("model.id", ondelete="SET NULL"))
     model: Mapped[Optional["Model"]] = relationship()
     task_id:  Mapped[Optional[str]] = mapped_column(String(36))
 
-    # Relations
+    # Other relations
     chat_id: Mapped[int] = mapped_column(ForeignKey("chat.id"))
     chat: Mapped["Chat"] = relationship(back_populates="messages")
     parent_id: Mapped[Optional[int]] = mapped_column(ForeignKey("chat_message.id"))
