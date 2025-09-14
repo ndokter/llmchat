@@ -86,5 +86,6 @@ class ChatMessage(BaseModel):
         back_populates="children"
     )
     children: Mapped[List["ChatMessage"]] = relationship(
-        back_populates="parent"
+        back_populates="parent",
+        cascade="all, delete-orphan"
     )

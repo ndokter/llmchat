@@ -174,6 +174,18 @@ async def chat_message_details(request: Request, message_id: int, db: Session = 
     return chat_message
 
 
+@app.delete("/message/{message_id}")
+async def chat_message_delete(message_id: int, db: Session = Depends(get_db)):
+    chat_message = db.get(ChatMessage, message_id)
+    if not chat_message:
+        raise HTTPException(status_code=404, detail="Chat message not found")
+
+    db.delete(chat_message)
+    db.commit()
+    
+    return Response(status_code=204)
+
+
 @app.get("/message/{assistant_message_id}/stream")
 async def chat_message_stream(request: Request, assistant_message_id: int, db: Session = Depends(get_db)):
     chat_message = db.get(ChatMessage, assistant_message_id)
