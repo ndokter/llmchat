@@ -4,3 +4,9 @@
 *.pyc
 sqlite.db
 notes.txt
+
+*.log
+
+node_modules
+
+*.tsbuildinfo
