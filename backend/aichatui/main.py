@@ -39,13 +39,6 @@ app = FastAPI(lifespan=lifespan)
 celery_app = create_celery()
 
 
-@app.get("/providers", response_model=list[ProviderResponse])
-def provider_list(db: Session = Depends(get_db)):
-    providers = db.scalars(select(Provider)).all()
-
-    return providers
-
-
 @app.post("/providers", response_model=ProviderResponse)
 def provider_create(provider_request: ProviderRequest, db: Session = Depends(get_db)):
     provider = Provider(
@@ -57,6 +50,22 @@ def provider_create(provider_request: ProviderRequest, db: Session = Depends(get
     db.commit()
     db.refresh(provider)
     
+    return provider
+
+
+@app.get("/providers", response_model=list[ProviderResponse])
+def provider_list(db: Session = Depends(get_db)):
+    providers = db.scalars(select(Provider)).all()
+
+    return providers
+
+
+@app.get("/providers/{provider_id}", response_model=ProviderResponse)
+def provider_details(provider_id: int, db: Session = Depends(get_db)):
+    provider = db.get(Provider, provider_id)
+    if not provider:
+        raise HTTPException(status_code=404, detail="Provider not found")
+
     return provider
 
 
@@ -210,13 +219,13 @@ async def chat_delete(request: Request, chat_id: int, db: Session = Depends(get_
     return Response(status_code=204)
 
 
-@app.get("/message/{message_id}", response_model=ChatMessageResponse)
+@app.get("/messages/{message_id}", response_model=ChatMessageResponse)
 async def chat_message_details(request: Request, message_id: int, db: Session = Depends(get_db)):
     chat_message = db.get(ChatMessage, message_id)
     return chat_message
 
 
-@app.delete("/message/{message_id}")
+@app.delete("/messages/{message_id}")
 async def chat_message_delete(message_id: int, db: Session = Depends(get_db)):
     chat_message = db.get(ChatMessage, message_id)
     if not chat_message:
@@ -228,7 +237,7 @@ async def chat_message_delete(message_id: int, db: Session = Depends(get_db)):
     return Response(status_code=204)
 
 
-@app.get("/message/{assistant_message_id}/stream")
+@app.get("/messages/{assistant_message_id}/stream")
 async def chat_message_stream(request: Request, assistant_message_id: int, db: Session = Depends(get_db)):
     chat_message = db.get(ChatMessage, assistant_message_id)
     if not chat_message \
