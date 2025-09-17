@@ -21,7 +21,7 @@ from aichatui.requests_responses import (
     ProviderRequest, 
 )
 from aichatui.celery_utils import create_celery
-from aichatui.services.redis import ChatMessageStreamConsumer
+from aichatui.services.event_stream import EventStreamConsumer
 import aichatui.services.chat
 import aichatui.services.chat_message
 import aichatui.services.models
@@ -237,19 +237,13 @@ async def chat_message_delete(message_id: int, db: Session = Depends(get_db)):
     return Response(status_code=204)
 
 
-@app.get("/messages/{assistant_message_id}/stream")
-async def chat_message_stream(request: Request, assistant_message_id: int, db: Session = Depends(get_db)):
-    chat_message = db.get(ChatMessage, assistant_message_id)
-    if not chat_message \
-            or chat_message.role != ChatMessage.ROLE_ASSISTANT \
-            or chat_message.status != ChatMessage.STATUS_GENERATING:
-        raise HTTPException(status_code=404, detail="Stream not available")
-
+@app.get("/event-stream")
+async def event_stream(request: Request, db: Session = Depends(get_db)):
     async def event_generator():
         try:
-            async with ChatMessageStreamConsumer(
+            async with EventStreamConsumer(
                 redis_url=settings.REDIS_URL,
-                channel_name=f'message-{assistant_message_id}'
+                channel_name='chat-events'
             ) as stream:
                 async for message in stream:
                     if message:
@@ -259,7 +253,5 @@ async def chat_message_stream(request: Request, assistant_message_id: int, db: S
   
         except Exception as e:
             yield f"data: {json.dumps({'content': 'Internal error', 'status': 'error'})}\n\n"
-        finally:
-            yield f"data: {json.dumps({'content': '', 'status': 'done'})}\n\n"
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")

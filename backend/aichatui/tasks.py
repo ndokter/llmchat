@@ -1,12 +1,11 @@
-import time
 from celery import shared_task
 from sqlalchemy.orm import joinedload
 
 from aichatui.database import db_session
 from aichatui.models import ChatMessage
-from aichatui.services.redis import ChatMessageStreamProducer
-import aichatui.services.openai
+from aichatui.services.event_stream import EventStreamProducer
 from aichatui.config import settings
+import aichatui.services.openai
 
 
 @shared_task
@@ -29,16 +28,24 @@ def run_chat_completion(assistant_message_id):
         event = None
         message = ""
 
-        with ChatMessageStreamProducer(
+        with EventStreamProducer(
             redis_url=settings.REDIS_URL,
-            channel_name=f'message-{assistant_message_id}'
+            channel_name='chat-events'
         ) as stream:
+
             for event in events:
                 if content:= event.choices[0].delta.content:
                     message += content
 
-                    # Put them on the a redis channel for live streaming
-                    stream.add_message(content)
+                    stream.add_message(
+                        {
+                            "type": "chat:completion",
+                            "chat_id": chat.id,
+                            "message_id": assistant_message.id,
+                            "status": assistant_message.status,
+                            "content": content
+                        }
+                    )
 
         if not event:
             assistant_message.status = ChatMessage.STATUS_FAILED
@@ -49,7 +56,16 @@ def run_chat_completion(assistant_message_id):
         assistant_message.prompt_tokens = event.usage.completion_tokens
         assistant_message.completion_tokens = event.usage.completion_tokens
         assistant_message.total_tokens = event.usage.total_tokens
-        
         assistant_message.status = ChatMessage.STATUS_COMPLETED
+
+        stream.add_message(
+            {
+                "type": "chat:completion",
+                "chat_id": chat.id,
+                "message_id": assistant_message.id,
+                "status": assistant_message.status,
+                "content": ""
+            }
+        )
 
         db.commit()
