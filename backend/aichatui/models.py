@@ -31,7 +31,7 @@ class Model(BaseModel):
     system_prompt: Mapped[Optional[str]]
     deleted_at: Mapped[Optional[datetime.datetime]]
 
-    provider_id: Mapped[int] = mapped_column(ForeignKey("provider.id"))
+    provider_id: Mapped[Optional[int]] = mapped_column(ForeignKey("provider.id", ondelete="SET NULL"))
     provider: Mapped["Provider"] = relationship(back_populates="models")
 
     messages: Mapped[list["ChatMessage"]] = relationship(

@@ -1,10 +1,9 @@
 from contextlib import asynccontextmanager
-import datetime
 import json
 
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from sqlalchemy import select
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session
 from fastapi.responses import StreamingResponse
 
 from aichatui.config import settings
@@ -12,6 +11,7 @@ from aichatui.database import get_db, engine
 from aichatui.models import BaseModel, Chat, Provider, Model, ChatMessage
 from aichatui.requests_responses import (
     ChatRequest, 
+    ChatUpdateRequest,
     ChatResponse,
     ChatListResponse,
     ChatMessageResponse,
@@ -23,6 +23,10 @@ from aichatui.requests_responses import (
 from aichatui.celery_utils import create_celery
 from aichatui.services.redis import ChatMessageStreamConsumer
 import aichatui.services.chat
+import aichatui.services.chat_message
+import aichatui.services.models
+import aichatui.services.provider
+import aichatui.selectors.chat
 
 
 @asynccontextmanager
@@ -60,23 +64,24 @@ def provider_update(provider_id: int, provider_request: ProviderRequest, db: Ses
     provider = db.get(Provider, provider_id)
     if not provider:
         raise HTTPException(status_code=404, detail="Provider not found")
-    provider.url = provider_request.url
-    provider.api_key = provider_request.api_key
-    
-    db.commit()
-    db.refresh(provider)
+
+    provider = aichatui.services.provider.update(
+        provider=provider,
+        url=provider_request.url,
+        api_key=provider_request.api_key,
+        db=db
+    )
 
     return provider
 
 
 @app.delete("/providers/{provider_id}")
 def provider_delete(provider_id: int, db: Session = Depends(get_db)):
-    provider = db.get(Provider, provider_id)
+    provider = db.get(Provider, provider_id)  # TODO joinedload/selector
     if not provider:
         raise HTTPException(status_code=404, detail="Provider not found")
 
-    db.delete(provider)
-    db.commit()
+    aichatui.services.provider.delete(provider=provider, db=db)
     
     return Response(status_code=204)
 
@@ -110,13 +115,14 @@ def model_update(model_id: int, model_request: ModelRequest, db: Session = Depen
     model = db.get(Model, model_id)
     if not model:
         raise HTTPException(status_code=404, detail="Provider not found")
-    model.name = model_request.name
-    model.alias = model_request.alias
-    model.system_prompt = model_request.system_prompt
-    model.provider_alias = model_request.provider_id
 
-    db.commit()
-    db.refresh(model)
+    model = aichatui.services.models.update(
+        model=model,
+        name=model_request.name,
+        alias=model_request.alias,
+        system_prompt=model_request.system_prompt,
+        db=db
+    )
 
     return model
 
@@ -127,11 +133,27 @@ def model_delete(model_id: int, db: Session = Depends(get_db)):
     if not model:
         raise HTTPException(status_code=404, detail="Model not found")
 
-    model.deleted_at = datetime.datetime.now()
-    db.commit()
+    aichatui.services.models.delete(model=model, db=db)
     
     return Response(status_code=204)
 
+
+
+@app.post("/chat-message", response_model=ChatMessageResponse)
+async def chat_new_message(chat_request: ChatRequest, db: Session = Depends(get_db)):
+    chat = aichatui.selectors.chat.get_or_create(
+        chat_id=chat_request.chat_id, 
+        db=db
+    )
+    assistant_message = aichatui.services.chat_message.create(
+        chat=chat,
+        parent_id=chat_request.parent_id,
+        model_id=chat_request.model_id, 
+        message=chat_request.message,
+        db=db,
+    )
+
+    return assistant_message
 
 
 @app.get("/chats", response_model=list[ChatListResponse])
@@ -140,32 +162,40 @@ async def chats_list(db: Session = Depends(get_db)):
     return chats
 
 
-@app.post("/chats", response_model=ChatMessageResponse)
-async def chat_new_message(chat_request: ChatRequest, db: Session = Depends(get_db)):
-    assistant_message = aichatui.services.chat.new_message(
-        db=db,
-        chat_id=chat_request.chat_id,
-        parent_id=chat_request.parent_id,
-        model_id=chat_request.model_id, 
-        message=chat_request.message,
-    )
-
-    return assistant_message
-
-
 @app.get("/chats/{chat_id}", response_model=ChatResponse)
 async def chat_details(request: Request, chat_id: int, db: Session = Depends(get_db)):
-    chat = db.query(Chat) \
-        .options(joinedload(Chat.messages)) \
-        .filter(Chat.id == chat_id) \
-        .first()
+    chat = aichatui.selectors.chat.get_with_message(
+        chat_id=chat_id,
+        db=db
+    )
+
+    if not chat:
+        return Response(status_code=404)
 
     return chat
 
 
-@app.get("/chats/{chat_id}/messages")
-async def chat_message_list(request: Request, chat_id: int, db: Session = Depends(get_db)):
-    return {}
+@app.put("/chats/{chat_id}", response_model=ChatResponse)
+async def chat_update(chat_update_request: ChatUpdateRequest, chat_id: int, db: Session = Depends(get_db)):
+    chat = aichatui.selectors.chat.get_with_message(
+        chat_id=chat_id,
+        db=db
+    )
+    chat = aichatui.services.chat.update(
+        chat=chat,
+        title=chat_update_request.title,
+        db=db
+    )
+
+    return chat
+
+
+@app.delete("/chats/{chat_id}", response_model=ChatResponse)
+async def chat_delete(request: Request, chat_id: int, db: Session = Depends(get_db)):
+    chat = aichatui.selectors.chat.get_with_message(chat_id=chat_id, db=db)
+    aichatui.services.chat.delete(chat=chat, db=db)
+
+    return Response(status_code=204)
 
 
 @app.get("/message/{message_id}", response_model=ChatMessageResponse)

@@ -18,18 +18,18 @@ class ProviderRequest(BaseModel):
     api_key: str
 
 
+class ModelRequest(BaseModel):
+    name: str
+    alias: str
+    system_prompt: Optional[str] = None
+    provider_id: int
+
+
 class ModelResponse(BaseModel):
     id: int
     name: str
     alias: str
     system_prompt: Optional[str]
-    provider_id: int
-
-
-class ModelRequest(BaseModel):
-    name: str
-    alias: str
-    system_prompt: Optional[str] = None
     provider_id: int
 
 
@@ -54,6 +54,10 @@ class ChatRequest(BaseModel):
     model_id: int
     parent_id: int | None
     message: str
+
+
+class ChatUpdateRequest(BaseModel):
+    title: Optional[str] = None
 
 
 class ChatResponse(BaseModel):
