@@ -1,10 +1,17 @@
+from typing import Optional
 from sqlalchemy.orm import Session
 
 from aichatui.models import Chat, ChatMessage
 from aichatui.tasks import run_chat_completion
 
 
-def create(chat: Chat, parent_id, model_id, message, db: Session):
+def create(
+    chat: Chat, 
+    parent_id: Optional[int], 
+    model_id: int, 
+    message: ChatMessage, 
+    db: Session
+):
     user_message = ChatMessage(
         chat_id=chat.id,
         parent_id=parent_id,

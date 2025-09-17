@@ -27,6 +27,7 @@ import aichatui.services.chat_message
 import aichatui.services.models
 import aichatui.services.provider
 import aichatui.selectors.chat
+import aichatui.selectors.model
 
 
 @asynccontextmanager
@@ -138,17 +139,28 @@ def model_delete(model_id: int, db: Session = Depends(get_db)):
     return Response(status_code=204)
 
 
-
 @app.post("/chat-message", response_model=ChatMessageResponse)
-async def chat_new_message(chat_request: ChatRequest, db: Session = Depends(get_db)):
+async def chat_new_message(chat_request: ChatRequest, db: Session = Depends(get_db)): 
+    model = aichatui.selectors.model.active_by_id(model_id=chat_request.model_id, db=db)
+    if not model:
+        raise HTTPException(status_code=404, detail="Model not found")
+
+    if chat_request.parent_id:
+        parent_message = db.get(ChatMessage, chat_request.parent_id)
+        if not parent_message:
+            raise HTTPException(status_code=404, detail="Parent message not found")
+        parent_message_id = parent_message.id
+    else:
+        parent_message_id = None
+
     chat = aichatui.selectors.chat.get_or_create(
         chat_id=chat_request.chat_id, 
         db=db
     )
     assistant_message = aichatui.services.chat_message.create(
         chat=chat,
-        parent_id=chat_request.parent_id,
-        model_id=chat_request.model_id, 
+        parent_id=parent_message_id,
+        model_id=model.id, 
         message=chat_request.message,
         db=db,
     )
