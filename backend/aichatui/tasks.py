@@ -3,7 +3,7 @@ from sqlalchemy.orm import joinedload
 
 from aichatui.database import db_session
 from aichatui.models import ChatMessage
-from aichatui.services.event_stream import EventStreamProducer
+from aichatui.services.event_stream import PubSubProducer
 from aichatui.config import settings
 import aichatui.services.openai
 
@@ -28,44 +28,25 @@ def run_chat_completion(assistant_message_id):
         event = None
         message = ""
 
-        with EventStreamProducer(
-            redis_url=settings.REDIS_URL,
-            channel_name='chat-events'
-        ) as stream:
-
+        with PubSubProducer(settings.REDIS_URL, channel="chat-events") as pub:
             for event in events:
-                if content:= event.choices[0].delta.content:
+                if content := event.choices[0].delta.content:
                     message += content
+                    pub.send({
+                        "type": "chat:completion",
+                        "chat_id": chat.id,
+                        "message_id": assistant_message.id,
+                        "status": assistant_message.status,
+                        "content": message
+                    })
 
-                    stream.add_message(
-                        {
-                            "type": "chat:completion",
-                            "chat_id": chat.id,
-                            "message_id": assistant_message.id,
-                            "status": assistant_message.status,
-                            "content": content
-                        }
-                    )
-
-        if not event:
-            assistant_message.status = ChatMessage.STATUS_FAILED
-            db.commit()
-            return
-
-        assistant_message.message = message
-        assistant_message.prompt_tokens = event.usage.completion_tokens
-        assistant_message.completion_tokens = event.usage.completion_tokens
-        assistant_message.total_tokens = event.usage.total_tokens
-        assistant_message.status = ChatMessage.STATUS_COMPLETED
-
-        stream.add_message(
-            {
-                "type": "chat:completion",
-                "chat_id": chat.id,
-                "message_id": assistant_message.id,
-                "status": assistant_message.status,
-                "content": ""
-            }
-        )
+        # final “empty” chunk (the original code does the same)
+        pub.send({
+            "type": "chat:completion",
+            "chat_id": chat.id,
+            "message_id": assistant_message.id,
+            "status": ChatMessage.STATUS_COMPLETED,
+            "content": message
+        })
 
         db.commit()

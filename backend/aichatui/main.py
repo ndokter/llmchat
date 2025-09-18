@@ -1,4 +1,6 @@
 from contextlib import asynccontextmanager
+import redis.asyncio as aioredis
+import asyncio
 import json
 
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
@@ -21,14 +23,14 @@ from aichatui.requests_responses import (
     ProviderRequest, 
 )
 from aichatui.celery_utils import create_celery
-from aichatui.services.event_stream import EventStreamConsumer
+from aichatui.services.event_stream import PubSubConsumer
 import aichatui.services.chat
 import aichatui.services.chat_message
 import aichatui.services.models
 import aichatui.services.provider
 import aichatui.selectors.chat
 import aichatui.selectors.model
-
+        
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -238,20 +240,28 @@ async def chat_message_delete(message_id: int, db: Session = Depends(get_db)):
 
 
 @app.get("/event-stream")
-async def event_stream(request: Request, db: Session = Depends(get_db)):
-    async def event_generator():
-        try:
-            async with EventStreamConsumer(
-                redis_url=settings.REDIS_URL,
-                channel_name='chat-events'
-            ) as stream:
-                async for message in stream:
-                    if message:
-                        yield f"data: {json.dumps(message)}\n\n"
-                    else:
-                        yield ": keep-alive\n\n"
-  
-        except Exception as e:
-            yield f"data: {json.dumps({'content': 'Internal error', 'status': 'error'})}\n\n"
+async def event_stream(request: Request):
 
-    return StreamingResponse(event_generator(), media_type="text/event-stream")
+    async def event_generator(redis_url: str, channel: str):
+        redis = aioredis.from_url(redis_url)
+        pubsub = redis.pubsub()
+        try:
+            await pubsub.subscribe(channel)
+
+            while True:
+                msg = await pubsub.get_message(timeout=10)
+                if msg is None:
+                    yield b": keep-alive\n\n"
+                elif msg["type"] == "message":
+                    payload = json.dumps(json.loads(msg["data"]))
+                    yield f"data: {payload}\n\n".encode("utf-8")
+        except asyncio.CancelledError:
+            raise
+        finally:
+            await pubsub.close()
+            await redis.close()
+
+    return StreamingResponse(
+        event_generator(settings.REDIS_URL, "chat-events"),
+        media_type="text/event-stream; charset=utf-8",
+    )

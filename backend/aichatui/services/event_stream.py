@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 import redis
 import redis.asyncio as aioredis
-
+import json
 
 
 
@@ -19,71 +19,49 @@ class ChatEvent:
     title: str
     content: str
     
-    # def to_redis(self) -> Dict[str, str]:
-    #     """
-    #     Convert to plain dict[str, str] so it can be passed to
-    #     redis-py xadd (which only accepts string values).
-    #     """
-    #     return {k: str(v) for k, v in asdict(self).items()}
 
-    # @classmethod
-    # def from_redis(cls, raw: Dict[str, str]) -> "ChatEvent":
-    #     """Re-create the dataclass from redis reply."""
-    #     return cls(**raw)
+class PubSubProducer:
+    """Very small wrapper: open connection once, publish as JSON."""
+    def __init__(self, redis_url: str, channel: str):
+        self.r = redis.from_url(redis_url, decode_responses=False)
+        self.ch = channel
 
-
-class EventStreamProducer:
-
-    def __init__(self, redis_url, channel_name):
-        self.redis_client = redis.from_url(redis_url)
-        self.channel_name = channel_name
+    def send(self, payload: dict) -> int:
+        """Returns # of clients that received the message."""
+        return self.r.publish(self.ch, json.dumps(payload))
 
     def __enter__(self):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        return self
-
-    def add_message(self, contents: dict):
-        self.redis_client.xadd(
-            self.channel_name,
-            contents
-        )
+        self.r.close()
 
 
-class EventStreamConsumer:
-
-    def __init__(self, redis_url, channel_name):
-        self.redis_client = aioredis.from_url(redis_url)
-        self.channel_name = channel_name
-        self.last_id = "0-0"
-        self.block_ms = 5000
+class PubSubConsumer:
+    """Async generator that yields decoded dicts from the channel."""
+    def __init__(self, redis_url: str, channel: str):
+        self.url = redis_url
+        self.ch = channel
 
     async def __aenter__(self):
+        self.redis = aioredis.from_url(self.url)
+        self.ps = self.redis.pubsub()
+        await self.ps.subscribe(self.ch)
+        await self.ps.wait_subscribed()
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        return self
+        await self.ps.close()
+        await self.redis.close()
 
     def __aiter__(self):
         return self
 
     async def __anext__(self):
-        messages = await self.redis_client.xread(
-            {self.channel_name: self.last_id},
-            count=10,
-            block=self.block_ms,
+        msg = await self.ps.get_message(
+            ignore_subscribe_messages=True,
+            timeout=5
         )
-
-        if not messages:
+        if msg is None:
             return None
-
-        stream, message_list = messages[0]
-        message_id, message_data = message_list[0]
-
-        self.last_id = message_id.decode()
-        decoded = {k.decode(): v.decode() for k, v in message_data.items()}
-
-        await self.redis_client.xdel(stream, self.last_id)
-
-        return decoded
+        return json.loads(msg["data"])
