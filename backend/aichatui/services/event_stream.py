@@ -50,12 +50,6 @@ class EventStreamProducer:
             contents
         )
 
-    def add_chat_event(self, chat_id, message_id, title, content, status):
-        self.redis_client.xadd(
-            self.channel_name,
-            {"content": content, "status": "active"}
-        )
-
 
 class EventStreamConsumer:
 
