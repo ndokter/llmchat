@@ -22,7 +22,7 @@ from aichatui.requests_responses import (
     ProviderResponse, 
     ProviderRequest, 
 )
-from aichatui.celery_utils import create_celery
+from aichatui.celery_utils import celery_app
 from aichatui.services.event_stream import PubSubConsumer
 import aichatui.services.chat
 import aichatui.services.chat_message
@@ -38,7 +38,7 @@ async def lifespan(app: FastAPI):
     yield
 
 app = FastAPI(lifespan=lifespan)
-celery_app = create_celery()
+celery_app.autodiscover_tasks(["aichatui"])
 
 
 @app.post("/providers", response_model=ProviderResponse)
@@ -237,6 +237,18 @@ async def chat_message_delete(message_id: int, db: Session = Depends(get_db)):
     db.commit()
     
     return Response(status_code=204)
+
+
+@app.post("/messages/{message_id}/cancel")
+async def chat_message_cancel(message_id: int, db: Session = Depends(get_db)):
+    chat_message = db.get(ChatMessage, message_id)
+    if not chat_message:
+        raise HTTPException(status_code=404, detail="Chat message not found")
+
+    aichatui.services.chat_message.cancel(chat_message=chat_message, db=db)
+    
+    return Response(status_code=204)
+
 
 
 @app.get("/event-stream")

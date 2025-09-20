@@ -1,8 +1,12 @@
 from typing import Optional
+
+from celery.contrib.abortable import AbortableAsyncResult
 from sqlalchemy.orm import Session
 
 from aichatui.models import Chat, ChatMessage
 from aichatui.tasks import run_chat_completion
+from aichatui.models import ChatMessage
+from aichatui.celery_utils import celery_app
 
 
 def create(
@@ -36,6 +40,12 @@ def create(
 
     task = run_chat_completion.delay(assistant_message_id=assistant_message.id)
     assistant_message.task_id = task.id
+
     db.commit()
 
     return assistant_message
+
+
+def cancel(chat_message: ChatMessage, db: Session):
+    result = AbortableAsyncResult(chat_message.task_id, app=celery_app)
+    result.abort()
