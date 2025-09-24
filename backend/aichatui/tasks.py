@@ -35,29 +35,27 @@ def run_chat_completion(self, assistant_message_id):
                     assistant_message.message += content
                     pub.send({
                         "type": "chat:completion",
-                        "chat_id": chat.id,
-                        "message_id": assistant_message.id,
-                        "status": assistant_message.status,
-                        "content": assistant_message.message
+                        "body": {
+                            "chat_id": chat.id,
+                            "message_id": assistant_message.id,
+                            "status": assistant_message.status,
+                            "content": assistant_message.message
+                        }
                     })
 
         if self.is_aborted():
             assistant_message.status = ChatMessage.STATUS_CANCELLED
-            pub.send({
-                "type": "chat:completion",
-                "chat_id": chat.id,
-                "message_id": assistant_message.id,
-                "status": assistant_message.status,
-                "content": assistant_message.message
-            })
         else:
             assistant_message.status = ChatMessage.STATUS_COMPLETED
-            pub.send({
-                "type": "chat:completion",
+        
+        pub.send({
+            "type": "chat:completion",
+            "body": {
                 "chat_id": chat.id,
                 "message_id": assistant_message.id,
                 "status": assistant_message.status,
                 "content": assistant_message.message
-            })
+            }
+        })
 
         db.commit()
