@@ -6,7 +6,6 @@ const eventStore = useEventStore()
 
 const eventStreamHandler = (e: EventData) => {   
     if (e.type === "chat:completion") {
-        // TODO maybe use own object instead of MessageEvent after all..
         const {chat_id, message_id, content, status } = e.body
 
         console.log(e.body)
@@ -62,16 +61,32 @@ onUnmounted(() => {
 
         </div>
 
-        <form @submit.prevent="addMessage">
-            <input type="text" name="query" />
-        </form>
+        <div id="chat-input">
+            <form @submit.prevent="addMessage">
+                <input type="text" name="query" placeholder="Enter message.." />
+            </form>
+        </div>
     </div>
 </template>
 
 <style scoped>
 .chat {
     flex: 1;
-    padding: 1rem;
     background: #fff;
+    position: relative;
+    padding-bottom: 20px;
+    background: #ccc;
 }
+#chat-input {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 100px;
+    background: #666
+}
+    #chat-input input {
+        width: 100%;
+        padding:10px;
+    }
+
 </style>
