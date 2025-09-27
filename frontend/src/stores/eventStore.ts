@@ -2,9 +2,27 @@ import { defineStore } from 'pinia'
 
 
 export interface EventData {
-    type: string;
-    body: Record<string, any>;
+  type: string;
+  body: any;
 }
+
+// interface ChatCompletionEvent extends EventData {
+//   type: "chat:completion";
+//   body: {
+//     chat_id: number;
+//     message_id: number;
+//     status: string;
+//     content: string;
+//   };
+// }
+
+// interface ChatErrorEvent extends BaseEEventDatavent {
+//   type: "chat:error";
+//   body: {
+//     chat_id: number;
+//     error: string;
+//   };
+// }
 
 export type EventHandler = (event: EventData) => void
 

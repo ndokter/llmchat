@@ -4,12 +4,12 @@ import { useEventStore, type EventData, type EventHandler } from '@/stores/event
 
 const eventStore = useEventStore()
 
-const eventStreamHandler = (e: EventData) => {
-    console.log('got e: ', e)
-    
+const eventStreamHandler = (e: EventData) => {   
     if (e.type === "chat:completion") {
         // TODO maybe use own object instead of MessageEvent after all..
-        const {message_id, content, status } = e.body
+        const {chat_id, message_id, content, status } = e.body
+
+        console.log(e.body)
 
         const chatMessageId = `chat-message-${message_id}`
         let chatMessage = document.getElementById(chatMessageId)
