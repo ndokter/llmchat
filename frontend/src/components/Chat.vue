@@ -4,7 +4,7 @@ import { useEventStore, type EventData, type EventHandler } from '@/stores/event
 
 const eventStore = useEventStore()
 
-const eventStreamHandler = (e: MessageEvent) => {
+const eventStreamHandler = (e: EventData) => {
     console.log('got e: ', e)
     
     if (e.type === "chat:completion") {
@@ -47,6 +47,10 @@ const addMessage = (submitEvent: Event) => {
 
 onMounted(() => {
   eventStore.subscribe(eventStreamHandler)
+})
+
+onUnmounted(() => {
+    eventStore.unsubscribe(eventStreamHandler)
 })
 
 

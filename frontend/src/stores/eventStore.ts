@@ -1,6 +1,12 @@
 import { defineStore } from 'pinia'
 
-export type EventHandler = (event: MessageEvent) => void
+
+export interface EventData {
+    type: string;
+    body: Record<string, any>;
+}
+
+export type EventHandler = (event: EventData) => void
 
 export const useEventStore = defineStore('event', {
     state: () => ({
@@ -15,25 +21,29 @@ export const useEventStore = defineStore('event', {
         this.source = new EventSource(`${import.meta.env.VITE_API_URL}/event-stream`)
 
         this.source.onmessage = (event: MessageEvent) => {
-            let eventData: MessageEvent
+
+            let eventData: EventData;
             try {
                 eventData = JSON.parse(event.data)
+
             } catch {
                 console.error('Error reading event-stream: ' + event.data)
                 return
             }   
             this.subscribers.forEach((fn) => fn(eventData))
+
         }
     },
 
-    subscribe(callback: (event: MessageEvent) => void) {
+    subscribe(callback: EventHandler) {
         if (!this.source)
             this.connect()
 
         this.subscribers.add(callback)
+    },
 
-        // Returns unsubscribe method
-        return () => this.subscribers.delete(callback)
+    unsubscribe(callback: EventHandler) {
+        this.subscribers.delete(callback)
     }
   },
 })
