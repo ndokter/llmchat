@@ -1,3 +1,4 @@
+import datetime
 from typing import Optional
 
 from celery.contrib.abortable import AbortableAsyncResult
@@ -36,6 +37,7 @@ def create(
     db.add(assistant_message)
     chat.messages.append(user_message)
     chat.messages.append(assistant_message)
+    chat.updated_at = datetime.datetime.now()
     db.commit()
 
     task = run_chat_completion.delay(assistant_message_id=assistant_message.id)

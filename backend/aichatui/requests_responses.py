@@ -70,3 +70,4 @@ class ChatResponse(BaseModel):
 class ChatListResponse(BaseModel):
     id: int
     title: Optional[str] = None
+    updated_at: datetime.datetime

@@ -1,8 +1,13 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted } from 'vue'
+import { onMounted, onUnmounted, ref, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useEventStore, type EventData, type EventHandler } from '@/stores/eventStore'
+import router from '@/router'
 
+const route = useRoute()
 const eventStore = useEventStore()
+
+const chat = ref({})
 
 const eventStreamHandler = (e: EventData) => {   
     if (e.type === "chat:completion") {
@@ -22,11 +27,13 @@ const eventStreamHandler = (e: EventData) => {
 
         chatMessage.textContent = content
 
+        router.push({name: 'chat', params: { id: chat_id}})
+
         // if (status === "generating") {}
     }
 }
 
-const addMessage = (submitEvent: Event) => {
+const sendMessage = (submitEvent: Event) => {
     const form = submitEvent.target as HTMLFormElement
     const queryInput = form?.elements.namedItem('query') as HTMLInputElement
     
@@ -36,7 +43,7 @@ const addMessage = (submitEvent: Event) => {
         method: "POST",
         body: JSON.stringify({
             "chat_id": null,
-            "model_id": 2,
+            "model_id": 1,
             "parent_id": null,
             "message": queryInput.value
         }),
@@ -44,8 +51,27 @@ const addMessage = (submitEvent: Event) => {
     })
 }
 
+const loadChat = async (id: any) => {
+  const response = await fetch(`${import.meta.env.VITE_API_URL}/chats/${id}`, {
+      method: "GET",
+      headers: {"Content-Type": "application/json"}
+  })
+  if (response.ok) {
+    chat.value = await response.json()
+  }
+}
+
+watch(
+  () => route.params.id,
+  (chatId) => {
+    loadChat(chatId)
+  },
+  { immediate: true }
+)
+
+
 onMounted(() => {
-  eventStore.subscribe(eventStreamHandler)
+    eventStore.subscribe(eventStreamHandler)
 })
 
 onUnmounted(() => {
@@ -57,12 +83,14 @@ onUnmounted(() => {
 
 <template>
     <div class="chat">
+        messages:::
         <div id="chat-messages">
-
+          <div v-for="message in chat.messages">
+            {{ message.message }}</div>
         </div>
 
         <div id="chat-input">
-            <form @submit.prevent="addMessage">
+            <form @submit.prevent="sendMessage">
                 <input type="text" name="query" placeholder="Enter message.." />
             </form>
         </div>

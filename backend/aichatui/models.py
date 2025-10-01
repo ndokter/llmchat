@@ -1,8 +1,9 @@
+from dataclasses import Field
 from typing import List
 from typing import Optional
 import datetime
 
-from sqlalchemy import ForeignKey, String
+from sqlalchemy import ForeignKey, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from aichatui.database import Base
@@ -43,6 +44,12 @@ class Chat(BaseModel):
     __tablename__ = "chat"
     id: Mapped[int] = mapped_column(primary_key=True)
     title: Mapped[Optional[str]]
+    created_at: Mapped[datetime.datetime] = mapped_column(server_default=func.now())
+    updated_at: Mapped[datetime.datetime] = mapped_column(
+        server_default=func.now(),
+        onupdate=func.now(),
+        index=True
+    )
     
     messages: Mapped[list["ChatMessage"]] = relationship(
         "ChatMessage", 
