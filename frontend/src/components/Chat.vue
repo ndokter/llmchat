@@ -83,7 +83,6 @@ onUnmounted(() => {
 
 <template>
     <div class="chat">
-        messages:::
         <div id="chat-messages">
           <div v-for="message in chat.messages">
             {{ message.message }}</div>
