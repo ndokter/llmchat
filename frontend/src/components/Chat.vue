@@ -3,33 +3,32 @@ import { onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useEventStore, type EventData, type EventHandler } from '@/stores/eventStore'
 import router from '@/router'
+import ChatMessage from '../components/ChatMessage.vue'
 
 const route = useRoute()
 const eventStore = useEventStore()
 
-const chat = ref({})
+interface Chat {
+  messages?: Array<{
+    id: number
+    message: string
+    role: string
+    parent_id: number | null
+  }>
+}
+
+const chat = ref<Chat>({})
 
 const eventStreamHandler = (e: EventData) => {   
     if (e.type === "chat:completion") {
         const {chat_id, message_id, content, status } = e.body
 
-        console.log(e.body)
-
-        const chatMessageId = `chat-message-${message_id}`
-        // let chatMessage = document.getElementById(chatMessageId)
-
-        // if (! chatMessage) {
-        //     chatMessage = document.createElement("div")
-        //     chatMessage.id = chatMessageId
-        //     chatMessage.classList.add("chat-message")
-        //     document.getElementById("chat-messages")?.appendChild(chatMessage)
-        // }
-
-        // chatMessage.textContent = content
-
-        // router.push({name: 'chat', params: { id: chat_id}})
-
-        // if (status === "generating") {}
+        if (chat.value.messages) {
+            const messageIndex = chat.value.messages.findIndex(m => m.id === message_id)
+            if (messageIndex > -1) {
+                chat.value.messages[messageIndex].message = content
+            }
+        }
     }
 }
 
@@ -42,7 +41,7 @@ const sendMessage = (submitEvent: Event) => {
     fetch(`${import.meta.env.VITE_API_URL}/chat-message`, {
         method: "POST",
         body: JSON.stringify({
-            "chat_id": route.params.id,
+            "chat_id": route.params.id ?? null,
             "model_id": 1,
             "parent_id": null,
             "message": queryInput.value
@@ -51,6 +50,10 @@ const sendMessage = (submitEvent: Event) => {
     })
     .then((response) => response.json())
     .then((data) => {
+        if (!route.params.id) {
+            router.push({name: 'chat', params: { id: data.id}})
+        }
+
         chat.value = data
     })
 }
@@ -68,7 +71,7 @@ const loadChat = async (id: any) => {
 watch(
   () => route.params.id,
   (chatId) => {
-    loadChat(chatId)
+    if (chatId) loadChat(chatId)
   },
   { immediate: true }
 )
@@ -89,7 +92,7 @@ onUnmounted(() => {
     <div class="chat">
         <div id="chat-messages">
           <div v-for="message in chat.messages" class="chat-message" :class="{'is-user': message.role == 'user'}" >
-            MSG: {{ message.message }}
+            <ChatMessage :message="message" />
           </div>
         </div>
 
@@ -109,9 +112,14 @@ onUnmounted(() => {
     padding-bottom: 20px;
     background: #ccc;
 }
+#chat-messages {
+    overflow-y: scroll;
+    max-height: calc(100vh - 120px);
+    padding: 10px;
+}
 .chat-message {
     margin: 10px;
-    background: #fff
+    background: #fff;
 }
     .chat-message.is-user {
         background: #ccc;

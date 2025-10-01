@@ -4,6 +4,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useEventStore, type EventData, type EventHandler } from '@/stores/eventStore'
 import router from '@/router'
 
+const props = defineProps(['message'])
 
 onMounted(() => {
 
@@ -17,7 +18,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-    chat message
+    {{ props.message.message }}
 </template>
 
 <style scoped>
