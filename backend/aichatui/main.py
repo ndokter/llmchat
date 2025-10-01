@@ -159,7 +159,7 @@ def model_delete(model_id: int, db: Session = Depends(get_db)):
     return Response(status_code=204)
 
 
-@app.post("/chat-message", response_model=ChatMessageResponse)
+@app.post("/chat-message", response_model=ChatResponse)
 async def chat_new_message(chat_request: ChatRequest, db: Session = Depends(get_db)): 
     model = aichatui.selectors.model.active_by_id(model_id=chat_request.model_id, db=db)
     if not model:
@@ -185,7 +185,7 @@ async def chat_new_message(chat_request: ChatRequest, db: Session = Depends(get_
         db=db,
     )
 
-    return assistant_message
+    return chat
 
 
 @app.get("/chats", response_model=list[ChatListResponse])
