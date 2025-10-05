@@ -91,9 +91,7 @@ onUnmounted(() => {
 <template>
     <div class="chat">
         <div id="chat-messages">
-          <div v-for="message in chat.messages" class="chat-message" :class="{'is-user': message.role == 'user'}" >
-            <ChatMessage :message="message" />
-          </div>
+            <ChatMessage v-for="message in chat.messages" class="chat-message" :message="message" />
         </div>
 
         <div id="chat-input">
@@ -108,7 +106,7 @@ onUnmounted(() => {
 .chat {
     flex: 1;
     background: #fff;
-    position: relative;
+    /* position: relative; */
     padding-bottom: 20px;
     background: #ccc;
 }
@@ -117,13 +115,6 @@ onUnmounted(() => {
     max-height: calc(100vh - 120px);
     padding: 10px;
 }
-.chat-message {
-    margin: 10px;
-    background: #fff;
-}
-    .chat-message.is-user {
-        background: #ccc;
-    }
 #chat-input {
     position: absolute;
     bottom: 0;

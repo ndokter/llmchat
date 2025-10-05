@@ -23,10 +23,12 @@ onUnmounted(() => {
 
 <style scoped>
 .sidebar {
-    width: 220px;
+    flex: 1;
+    /* width: 220px;
+    position:relative; */
     background: #140079ff;
     color: #fff;
-    /* padding: 1rem; */
     padding: 20px 10px;
+    overflow-y: scroll;
 }
 </style>

@@ -190,8 +190,7 @@ async def chat_new_message(chat_request: ChatRequest, db: Session = Depends(get_
 
 @app.get("/chats", response_model=list[ChatListResponse])
 async def chats_list(db: Session = Depends(get_db)):
-    chats = db.scalars(select(Chat)).all()
-    return chats
+    return aichatui.selectors.chat.get_list(db=db)
 
 
 @app.get("/chats/{chat_id}", response_model=ChatResponse)
