@@ -1,8 +1,12 @@
-@import './base.css';
 @import './markdown.css';
 @import 'highlight.js/styles/github.css';
+@import './base.css';
 
 .layout {
   display: flex;
   height: 100vh;
+}
+
+pre code.hljs {
+  padding: 0;
 }

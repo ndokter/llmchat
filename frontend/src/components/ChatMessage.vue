@@ -46,7 +46,7 @@ onUnmounted(() => {
     padding: 10px;
     background: #fff;
 }
-    .chat-message.is-user {
-        background: #ccc;
-    }
+.chat-message.is-user {
+    background: #ccc;
+}
 </style>
