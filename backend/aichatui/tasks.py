@@ -11,19 +11,21 @@ import aichatui.services.openai
 
 @celery_app.task(bind=True, base=AbortableTask)
 def run_chat_completion(self, assistant_message_id):
-
     with db_session() as db:
-        assistant_message = db.query(ChatMessage) \
-            .options(joinedload(ChatMessage.parent),
-                     joinedload(ChatMessage.chat)) \
-            .filter(ChatMessage.id == assistant_message_id) \
+        assistant_message = (
+            db.query(ChatMessage)
+            .options(joinedload(ChatMessage.parent), joinedload(ChatMessage.chat))
+            .filter(ChatMessage.id == assistant_message_id)
             .first()
+        )
         chat = assistant_message.chat
 
         events = aichatui.services.openai.query(
-            model=assistant_message.model, 
-            messages=[{'role': message.role, 'content': message.message}
-                      for message in chat.messages]
+            model=assistant_message.model,
+            messages=[
+                {"role": message.role, "content": message.message}
+                for message in chat.messages
+            ],
         )
 
         with PubSubProducer(settings.REDIS_URL, channel="chat-events") as pub:
@@ -33,29 +35,33 @@ def run_chat_completion(self, assistant_message_id):
 
                 if content := event.choices[0].delta.content:
                     assistant_message.message += content
-                    pub.send({
-                        "type": EventType.CHAT_COMPLETION,
-                        "body": {
-                            "chat_id": chat.id,
-                            "message_id": assistant_message.id,
-                            "status": assistant_message.status,
-                            "content": assistant_message.message
+                    pub.send(
+                        {
+                            "type": EventType.CHAT_COMPLETION,
+                            "body": {
+                                "chat_id": chat.id,
+                                "message_id": assistant_message.id,
+                                "status": assistant_message.status,
+                                "content": assistant_message.message,
+                            },
                         }
-                    })
+                    )
 
         if self.is_aborted():
             assistant_message.status = ChatMessage.STATUS_CANCELLED
         else:
             assistant_message.status = ChatMessage.STATUS_COMPLETED
-        
-        pub.send({
-            "type": "chat:completion",
-            "body": {
-                "chat_id": chat.id,
-                "message_id": assistant_message.id,
-                "status": assistant_message.status,
-                "content": assistant_message.message
+
+        pub.send(
+            {
+                "type": EventType.CHAT_COMPLETION,
+                "body": {
+                    "chat_id": chat.id,
+                    "message_id": assistant_message.id,
+                    "status": assistant_message.status,
+                    "content": assistant_message.message,
+                },
             }
-        })
+        )
 
         db.commit()
