@@ -1,24 +1,13 @@
-from dataclasses import dataclass
 import redis
 import redis.asyncio as aioredis
 import json
 
 
-
 class EventType:
     CHAT_TITLE = "chat:title"
     CHAT_COMPLETION = "chat:completion"
+    CHAT_CREATED = "chat:created"
 
-
-@dataclass
-class ChatEvent:
-    type: EventType
-    chat_id: str
-    message_id: str
-    status: str
-    title: str
-    content: str
-    
 
 class PubSubProducer:
     def __init__(self, redis_url: str, channel: str):
@@ -26,7 +15,6 @@ class PubSubProducer:
         self.channel = channel
 
     def send(self, payload: dict) -> int:
-        """Returns # of clients that received the message."""
         return self.r.publish(self.channel, json.dumps(payload))
 
     def __enter__(self):

@@ -3,9 +3,9 @@ from sqlalchemy.orm import joinedload
 
 from aichatui.database import db_session
 from aichatui.models import ChatMessage
-from aichatui.services.event_stream import PubSubProducer
 from aichatui.config import settings
 from aichatui.celery_utils import celery_app
+from aichatui.services.event_stream import PubSubProducer, EventType
 import aichatui.services.openai
 
 
@@ -34,7 +34,7 @@ def run_chat_completion(self, assistant_message_id):
                 if content := event.choices[0].delta.content:
                     assistant_message.message += content
                     pub.send({
-                        "type": "chat:completion",
+                        "type": EventType.CHAT_COMPLETION,
                         "body": {
                             "chat_id": chat.id,
                             "message_id": assistant_message.id,

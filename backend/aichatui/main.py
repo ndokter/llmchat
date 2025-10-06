@@ -13,30 +13,30 @@ from aichatui.config import settings
 from aichatui.database import get_db, engine
 from aichatui.models import BaseModel, Chat, Provider, Model, ChatMessage
 from aichatui.requests_responses import (
-    ChatRequest, 
+    ChatRequest,
     ChatUpdateRequest,
     ChatResponse,
     ChatListResponse,
     ChatMessageResponse,
     ModelResponse,
     ModelRequest,
-    ProviderResponse, 
-    ProviderRequest, 
+    ProviderResponse,
+    ProviderRequest,
 )
 from aichatui.celery_utils import celery_app
-from aichatui.services.event_stream import PubSubConsumer
 import aichatui.services.chat
 import aichatui.services.chat_message
 import aichatui.services.models
 import aichatui.services.provider
 import aichatui.selectors.chat
 import aichatui.selectors.model
-        
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     BaseModel.metadata.create_all(bind=engine)
     yield
+
 
 app = FastAPI(lifespan=lifespan)
 app.add_middleware(
@@ -52,15 +52,12 @@ celery_app.autodiscover_tasks(["aichatui"])
 
 @app.post("/providers", response_model=ProviderResponse)
 def provider_create(provider_request: ProviderRequest, db: Session = Depends(get_db)):
-    provider = Provider(
-        url=provider_request.url, 
-        api_key=provider_request.api_key
-    )
+    provider = Provider(url=provider_request.url, api_key=provider_request.api_key)
 
     db.add(provider)
     db.commit()
     db.refresh(provider)
-    
+
     return provider
 
 
@@ -81,7 +78,9 @@ def provider_details(provider_id: int, db: Session = Depends(get_db)):
 
 
 @app.put("/providers/{provider_id}", response_model=ProviderResponse)
-def provider_update(provider_id: int, provider_request: ProviderRequest, db: Session = Depends(get_db)):
+def provider_update(
+    provider_id: int, provider_request: ProviderRequest, db: Session = Depends(get_db)
+):
     provider = db.get(Provider, provider_id)
     if not provider:
         raise HTTPException(status_code=404, detail="Provider not found")
@@ -90,7 +89,7 @@ def provider_update(provider_id: int, provider_request: ProviderRequest, db: Ses
         provider=provider,
         url=provider_request.url,
         api_key=provider_request.api_key,
-        db=db
+        db=db,
     )
 
     return provider
@@ -103,7 +102,7 @@ def provider_delete(provider_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Provider not found")
 
     aichatui.services.provider.delete(provider=provider, db=db)
-    
+
     return Response(status_code=204)
 
 
@@ -118,21 +117,23 @@ def model_list(db: Session = Depends(get_db)):
 @app.post("/models", response_model=ModelResponse)
 def model_create(model_request: ModelRequest, db: Session = Depends(get_db)):
     model = Model(
-        name=model_request.name, 
-        alias=model_request.alias, 
+        name=model_request.name,
+        alias=model_request.alias,
         system_prompt=model_request.system_prompt,
-        provider_id=model_request.provider_id
+        provider_id=model_request.provider_id,
     )
 
     db.add(model)
     db.commit()
     db.refresh(model)
-    
+
     return model
 
 
 @app.put("/models/{model_id}", response_model=ModelResponse)
-def model_update(model_id: int, model_request: ModelRequest, db: Session = Depends(get_db)):
+def model_update(
+    model_id: int, model_request: ModelRequest, db: Session = Depends(get_db)
+):
     model = db.get(Model, model_id)
     if not model:
         raise HTTPException(status_code=404, detail="Provider not found")
@@ -142,7 +143,7 @@ def model_update(model_id: int, model_request: ModelRequest, db: Session = Depen
         name=model_request.name,
         alias=model_request.alias,
         system_prompt=model_request.system_prompt,
-        db=db
+        db=db,
     )
 
     return model
@@ -155,12 +156,12 @@ def model_delete(model_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Model not found")
 
     aichatui.services.models.delete(model=model, db=db)
-    
+
     return Response(status_code=204)
 
 
 @app.post("/chat-message", response_model=ChatResponse)
-async def chat_new_message(chat_request: ChatRequest, db: Session = Depends(get_db)): 
+async def chat_new_message(chat_request: ChatRequest, db: Session = Depends(get_db)):
     model = aichatui.selectors.model.active_by_id(model_id=chat_request.model_id, db=db)
     if not model:
         raise HTTPException(status_code=404, detail="Model not found")
@@ -173,14 +174,11 @@ async def chat_new_message(chat_request: ChatRequest, db: Session = Depends(get_
     else:
         parent_message_id = None
 
-    chat = aichatui.selectors.chat.get_or_create(
-        chat_id=chat_request.chat_id, 
-        db=db
-    )
+    chat = aichatui.selectors.chat.get_or_create(chat_id=chat_request.chat_id, db=db)
     assistant_message = aichatui.services.chat_message.create(
         chat=chat,
         parent_id=parent_message_id,
-        model_id=model.id, 
+        model_id=model.id,
         message=chat_request.message,
         db=db,
     )
@@ -195,10 +193,7 @@ async def chats_list(db: Session = Depends(get_db)):
 
 @app.get("/chats/{chat_id}", response_model=ChatResponse)
 async def chat_details(request: Request, chat_id: int, db: Session = Depends(get_db)):
-    chat = aichatui.selectors.chat.get_with_message(
-        chat_id=chat_id,
-        db=db
-    )
+    chat = aichatui.selectors.chat.get_with_message(chat_id=chat_id, db=db)
 
     if not chat:
         return Response(status_code=404)
@@ -207,15 +202,12 @@ async def chat_details(request: Request, chat_id: int, db: Session = Depends(get
 
 
 @app.put("/chats/{chat_id}", response_model=ChatResponse)
-async def chat_update(chat_update_request: ChatUpdateRequest, chat_id: int, db: Session = Depends(get_db)):
-    chat = aichatui.selectors.chat.get_with_message(
-        chat_id=chat_id,
-        db=db
-    )
+async def chat_update(
+    chat_update_request: ChatUpdateRequest, chat_id: int, db: Session = Depends(get_db)
+):
+    chat = aichatui.selectors.chat.get_with_message(chat_id=chat_id, db=db)
     chat = aichatui.services.chat.update(
-        chat=chat,
-        title=chat_update_request.title,
-        db=db
+        chat=chat, title=chat_update_request.title, db=db
     )
 
     return chat
@@ -230,7 +222,9 @@ async def chat_delete(request: Request, chat_id: int, db: Session = Depends(get_
 
 
 @app.get("/messages/{message_id}", response_model=ChatMessageResponse)
-async def chat_message_details(request: Request, message_id: int, db: Session = Depends(get_db)):
+async def chat_message_details(
+    request: Request, message_id: int, db: Session = Depends(get_db)
+):
     chat_message = db.get(ChatMessage, message_id)
     return chat_message
 
@@ -243,7 +237,7 @@ async def chat_message_delete(message_id: int, db: Session = Depends(get_db)):
 
     db.delete(chat_message)
     db.commit()
-    
+
     return Response(status_code=204)
 
 
@@ -254,14 +248,12 @@ async def chat_message_cancel(message_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Chat message not found")
 
     aichatui.services.chat_message.cancel(chat_message=chat_message, db=db)
-    
-    return Response(status_code=204)
 
+    return Response(status_code=204)
 
 
 @app.get("/event-stream")
 async def event_stream(request: Request):
-
     async def event_generator(redis_url: str, channel: str):
         redis = aioredis.from_url(redis_url)
         pubsub = redis.pubsub()
