@@ -10,7 +10,6 @@ from aichatui.services.openai import Roles
 from aichatui.services.event_stream import PubSubProducer, EventType
 import aichatui.services.openai
 import aichatui.services.chat
-import aichatui.selectors.chat
 import aichatui.selectors.model
 
 
