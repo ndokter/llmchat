@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 
-from aichatui.models import Chat
+from aichatui.models import Chat, ChatMessage
 
 
 def update(chat: Chat, title: str, db: Session):
@@ -18,9 +18,32 @@ def delete(chat: Chat, db: Session):
 
 # TODO use chat contents
 def generate_title_prompt(chat: Chat, db: Session):
-    
 
-    prompt = """### Task:
+    user_message = (
+        db.query(ChatMessage)
+        .filter(ChatMessage.chat_id == chat.id, ChatMessage.role == "user")
+        .order_by(ChatMessage.id.asc())
+        .limit(1)
+    ).first()
+
+    assistant_message = (
+        db.query(ChatMessage)
+        .filter(ChatMessage.chat_id == chat.id, ChatMessage.role == "assistant")
+        .order_by(ChatMessage.id.asc())
+        .limit(1)
+    ).first()
+
+    def get_text_segments(text, max_chars=2000):
+        if len(text) <= max_chars:
+            return text
+        else:
+            half = max_chars // 2
+            return text[:half] + text[-half:]
+    
+    user_segment = get_text_segments(user_message.message)
+    assistant_segment = get_text_segments(assistant_message.message)
+    
+    prompt = f"""### Task:
 Generate a concise, 2-3 word title with an emoji summarizing the chat history.
 ### Guidelines:
 - The title should clearly represent the main theme or subject of the conversation.
@@ -31,17 +54,18 @@ Generate a concise, 2-3 word title with an emoji summarizing the chat history.
 - The output must be a single, raw JSON object, without any markdown code fences or other encapsulating text.
 - Ensure no conversational text, affirmations, or explanations precede or follow the raw JSON output, as this will cause direct parsing failure.
 ### Output:
-JSON format: { "title": "your concise title here" }
+JSON format: {{ "title": "your concise title here" }}
 ### Examples:
-- { "title": "📉 Stock Market Trends" },
-- { "title": "🍪 Chocolate Chip Recipe" },
-- { "title": "🎵 Music Streaming Evolution" },
-- { "title": "💻 Work Productivity" },
-- { "title": "🤖 AI in Healthcare" },
-- { "title": "🎮 Game Development Insights" }
+- {{ "title": "📉 Stock Market Trends" }},
+- {{ "title": "🍪 Chocolate Chip Recipe" }},
+- {{ "title": "🎵 Music Streaming Evolution" }},
+- {{ "title": "💻 Work Productivity" }},
+- {{ "title": "🤖 AI in Healthcare" }},
+- {{ "title": "🎮 Game Development Insights" }}
 ### Chat History:
 <chat_history>
-This is a hardcoded example for title generation
-</chat_history>"""
+{user_segment}
+{assistant_segment}
+</history>"""
 
     return prompt

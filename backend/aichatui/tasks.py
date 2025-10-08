@@ -69,9 +69,9 @@ def run_chat_completion(self, assistant_message_id):
             }
         )
 
-        run_title_generation(chat_id=chat.id)
-
         db.commit()
+
+        run_title_generation(chat_id=chat.id)
 
 
 def run_title_generation(chat_id):
