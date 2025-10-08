@@ -10,6 +10,7 @@ from aichatui.models import Chat, ChatMessage
 from aichatui.tasks import run_chat_completion
 from aichatui.models import ChatMessage
 from aichatui.services.event_stream import PubSubProducer, EventType
+from aichatui.services.openai import Roles
 
 
 def create(
@@ -22,13 +23,13 @@ def create(
     user_message = ChatMessage(
         chat_id=chat.id,
         parent_id=parent_id,
-        role=ChatMessage.ROLE_USER,
+        role=Roles.ROLE_USER,
         message=message,
         status=ChatMessage.STATUS_COMPLETED,
     )
     assistant_message = ChatMessage(
         chat_id=chat.id,
-        role=ChatMessage.ROLE_ASSISTANT,
+        role=Roles.ROLE_ASSISTANT,
         message="",
         status=ChatMessage.STATUS_GENERATING,
         model_id=model_id,

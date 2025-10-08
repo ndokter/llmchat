@@ -11,7 +11,7 @@ from fastapi.responses import StreamingResponse
 
 from aichatui.config import settings
 from aichatui.database import get_db, engine
-from aichatui.models import BaseModel, Chat, Provider, Model, ChatMessage
+from aichatui.models import BaseModel, Provider, Model, ChatMessage
 from aichatui.requests_responses import (
     ChatRequest,
     ChatUpdateRequest,
@@ -175,7 +175,7 @@ async def chat_new_message(chat_request: ChatRequest, db: Session = Depends(get_
         parent_message_id = None
 
     chat = aichatui.selectors.chat.get_or_create(chat_id=chat_request.chat_id, db=db)
-    assistant_message = aichatui.services.chat_message.create(
+    aichatui.services.chat_message.create(
         chat=chat,
         parent_id=parent_message_id,
         model_id=model.id,

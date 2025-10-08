@@ -61,9 +61,6 @@ class Chat(BaseModel):
 class ChatMessage(BaseModel):
     __tablename__ = "chat_message"
 
-    ROLE_USER = "user"
-    ROLE_ASSISTANT = "assistant"
-
     STATUS_GENERATING = "generating"
     STATUS_COMPLETED = "completed"
     STATUS_FAILED = "failed"
