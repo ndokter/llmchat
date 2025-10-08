@@ -2,6 +2,28 @@ from sqlalchemy.orm import Session
 
 from aichatui.models import Chat, ChatMessage
 
+from sqlalchemy.orm import Session
+
+from aichatui.config import settings
+from aichatui.models import Chat, ChatMessage
+from aichatui.models import ChatMessage
+from aichatui.services.event_stream import PubSubProducer, EventType
+
+
+def get_or_create(chat_id: int, db: Session):
+    if chat_id:
+        chat = db.get(Chat, chat_id)
+    else:
+        chat = Chat()
+        db.add(chat)
+        db.flush()
+
+        # Trigger chat:created event
+        with PubSubProducer(settings.REDIS_URL, channel="chat-events") as pub:
+            pub.send({"type": EventType.CHAT_CREATED, "body": {"chat_id": chat.id}})
+
+    return chat
+
 
 def update(chat: Chat, title: str, db: Session):
     chat.title = title

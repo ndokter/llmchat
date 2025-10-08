@@ -174,7 +174,7 @@ async def chat_new_message(chat_request: ChatRequest, db: Session = Depends(get_
     else:
         parent_message_id = None
 
-    chat = aichatui.selectors.chat.get_or_create(chat_id=chat_request.chat_id, db=db)
+    chat = aichatui.services.chat.get_or_create(chat_id=chat_request.chat_id, db=db)
     aichatui.services.chat_message.create(
         chat=chat,
         parent_id=parent_message_id,

@@ -46,10 +46,6 @@ def create(
     task = run_chat_completion.delay(assistant_message_id=assistant_message.id)
     assistant_message.task_id = task.id
 
-    # Trigger chat:created event
-    with PubSubProducer(settings.REDIS_URL, channel="chat-events") as pub:
-        pub.send({"type": EventType.CHAT_CREATED, "body": {"chat_id": chat.id}})
-
     db.commit()
 
     return assistant_message

@@ -1,16 +1,5 @@
 <script setup lang="ts">
-import { inject, onMounted, onUnmounted } from 'vue'
-import { useEventStore } from '@/stores/eventStore'
 import ChatsList from './ChatsList.vue'
-
-const eventStore = useEventStore()
-
-onMounted(() => {
-})
-
-onUnmounted(() => {
-
-})
 
 
 </script>

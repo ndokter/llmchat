@@ -76,7 +76,7 @@ def run_chat_completion(self, assistant_message_id):
 
 def run_title_generation(chat_id):
     with db_session() as db:
-        chat = aichatui.selectors.chat.get_or_create(chat_id=chat_id, db=db)
+        chat = aichatui.services.chat.get_or_create(chat_id=chat_id, db=db)
         title_model = aichatui.selectors.model.get_title_generation_model(db=db)
         title_prompt = aichatui.services.chat.generate_title_prompt(chat=chat, db=db)
 
