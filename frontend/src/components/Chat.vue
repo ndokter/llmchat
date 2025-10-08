@@ -106,13 +106,16 @@ onUnmounted(() => {
 .chat {
     flex: 1;
     background: #fff;
-    /* position: relative; */
+    position: relative;
     padding-bottom: 20px;
     background: #ccc;
+    height: 100%; /* Ensure chat takes full height of its parent */
+    display: flex; /* Make chat a flex container */
+    flex-direction: column; /* Stack children vertically */
 }
 #chat-messages {
     overflow-y: scroll;
-    max-height: calc(100vh - 120px);
+    max-height: calc(100vh - 0px);
     padding: 10px;
 }
 #chat-input {

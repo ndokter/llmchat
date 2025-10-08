@@ -18,16 +18,21 @@ import Chat from '../components/Chat.vue'
 .layout {
   display: flex;
   height: 100vh;
+  width: 100vw;
+  overflow: hidden;
 }
 
 .sidebar-wrapper {
   width: 200px;
   flex: 0 0 200px;
   background: #140079ff;
+  height: 100vh;
+  overflow-y: auto;
 }
 
 .chat-wrapper {
   flex: 1;
   overflow: hidden;
+  height: 100vh;
 }
 </style>

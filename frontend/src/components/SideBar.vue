@@ -24,9 +24,8 @@ onUnmounted(() => {
 <style scoped>
 .sidebar {
     flex: 1;
-    /* width: 220px;
-    position:relative; */
     background: #140079ff;
+    max-height: 100vh;
     color: #fff;
     padding: 20px 10px;
     overflow-y: scroll;
