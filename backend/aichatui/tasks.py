@@ -77,6 +77,14 @@ def run_chat_completion(self, assistant_message_id):
 def run_title_generation(chat_id):
     with db_session() as db:
         chat = aichatui.services.chat.get_or_create(chat_id=chat_id, db=db)
+
+        # Generate try to generate the title after the first message when none is set yet.
+        if chat.title:
+            return
+        message_count = db.query(ChatMessage).filter(ChatMessage.chat_id == chat.id).count()
+        if message_count > 2:
+            return
+
         title_model = aichatui.selectors.model.get_title_generation_model(db=db)
         title_prompt = aichatui.services.chat.generate_title_prompt(chat=chat, db=db)
 
@@ -90,7 +98,6 @@ def run_title_generation(chat_id):
             if content := event.choices[0].delta.content:
                 title_json += content
 
-
         try:
             title = json.loads(title_json)['title']
         except json.JSONDecodeError:
@@ -100,7 +107,5 @@ def run_title_generation(chat_id):
         db.commit()
 
         with PubSubProducer(settings.REDIS_URL, channel="chat-events") as pub:
-            pub.send({
-                "type": EventType.CHAT_TITLE,
-                "body": {"title": chat.title}
-            })
+            pub.send({"type": EventType.CHAT_TITLE,
+                      "body": {"title": chat.title}})
