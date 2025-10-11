@@ -1,13 +1,13 @@
 from sqlalchemy.orm import Session
 
-from aichatui.models import Chat, ChatMessage
+from llmchat.models import Chat, ChatMessage
 
 from sqlalchemy.orm import Session
 
-from aichatui.config import settings
-from aichatui.models import Chat, ChatMessage
-from aichatui.models import ChatMessage
-from aichatui.services.event_stream import PubSubProducer, EventType
+from llmchat.config import settings
+from llmchat.models import Chat, ChatMessage
+from llmchat.models import ChatMessage
+from llmchat.services.event_stream import PubSubProducer, EventType
 
 
 def get_or_create(chat_id: int, db: Session):

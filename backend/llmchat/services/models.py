@@ -1,7 +1,7 @@
 import datetime
 from sqlalchemy.orm import Session
 
-from aichatui.models import Model
+from llmchat.models import Model
 
 
 def update(model: Model, name: str, alias: str, system_prompt:str, db: Session):

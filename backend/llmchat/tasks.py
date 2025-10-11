@@ -2,15 +2,15 @@ import json
 from celery.contrib.abortable import AbortableTask
 from sqlalchemy.orm import joinedload
 
-from aichatui.database import db_session
-from aichatui.models import ChatMessage
-from aichatui.config import settings
-from aichatui.celery_utils import celery_app
-from aichatui.services.openai import Roles
-from aichatui.services.event_stream import PubSubProducer, EventType
-import aichatui.services.openai
-import aichatui.services.chat
-import aichatui.selectors.model
+from llmchat.database import db_session
+from llmchat.models import ChatMessage
+from llmchat.config import settings
+from llmchat.celery_utils import celery_app
+from llmchat.services.openai import Roles
+from llmchat.services.event_stream import PubSubProducer, EventType
+import llmchat.services.openai
+import llmchat.services.chat
+import llmchat.selectors.model
 
 
 @celery_app.task(bind=True, base=AbortableTask)
@@ -24,7 +24,7 @@ def run_chat_completion(self, assistant_message_id):
         )
         chat = assistant_message.chat
 
-        events = aichatui.services.openai.query(
+        events = llmchat.services.openai.query(
             model=assistant_message.model,
             messages=[
                 {"role": message.role, "content": message.message}
@@ -75,7 +75,7 @@ def run_chat_completion(self, assistant_message_id):
 
 def run_title_generation(chat_id):
     with db_session() as db:
-        chat = aichatui.services.chat.get_or_create(chat_id=chat_id, db=db)
+        chat = llmchat.services.chat.get_or_create(chat_id=chat_id, db=db)
 
         # Generate try to generate the title after the first message when none is set yet.
         if chat.title:
@@ -84,10 +84,10 @@ def run_title_generation(chat_id):
         if message_count > 2:
             return
 
-        title_model = aichatui.selectors.model.get_title_generation_model(db=db)
-        title_prompt = aichatui.services.chat.generate_title_prompt(chat=chat, db=db)
+        title_model = llmchat.selectors.model.get_title_generation_model(db=db)
+        title_prompt = llmchat.services.chat.generate_title_prompt(chat=chat, db=db)
 
-        events = aichatui.services.openai.query(
+        events = llmchat.services.openai.query(
             model=title_model,
             messages=[{"role": Roles.ROLE_USER, "content": title_prompt}]
         )

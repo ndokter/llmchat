@@ -1,7 +1,7 @@
 from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload
 
-from aichatui.models import Chat
+from llmchat.models import Chat
 
 
 def get_with_message(chat_id: int, db: Session) -> Chat:

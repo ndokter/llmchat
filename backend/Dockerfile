@@ -1,6 +1,6 @@
 FROM python:3.12-slim as base
 
-WORKDIR /aichatui
+WORKDIR /llmchat
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \

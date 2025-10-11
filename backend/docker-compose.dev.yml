@@ -1,12 +1,12 @@
 services:
   web:
     build: .
-    command: fastapi dev aichatui/main.py 
+    command: fastapi dev llmchat/main.py 
       --host 0.0.0.0 
       --port 8000 
       --reload
     volumes:
-      - .:/aichatui
+      - .:/llmchat
     ports:
       - "8000:8000"
     environment:
@@ -14,9 +14,9 @@ services:
 
   celery:
     build: .
-    command: celery -A aichatui.main.celery_app worker --loglevel=info
+    command: celery -A llmchat.main.celery_app worker --loglevel=info
     volumes:
-      - .:/aichatui
+      - .:/llmchat
     depends_on:
       - redis
     environment:

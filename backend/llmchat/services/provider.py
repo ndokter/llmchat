@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 
-from aichatui.models import Provider
+from llmchat.models import Provider
 
 
 def update(provider: Provider, url: str, api_key: str, db: Session):
@@ -13,11 +13,11 @@ def update(provider: Provider, url: str, api_key: str, db: Session):
 
 
 def delete(provider: Provider, db: Session):
-    import aichatui.services.models
+    import llmchat.services.models
 
     # Soft delete models first
     for model in provider.models:
-        aichatui.services.models.delete(model=model, db=db)
+        llmchat.services.models.delete(model=model, db=db)
 
     db.delete(provider)
     db.commit()

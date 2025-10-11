@@ -9,10 +9,10 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 from fastapi.responses import StreamingResponse
 
-from aichatui.config import settings
-from aichatui.database import get_db, engine
-from aichatui.models import BaseModel, Provider, Model, ChatMessage
-from aichatui.requests_responses import (
+from llmchat.config import settings
+from llmchat.database import get_db, engine
+from llmchat.models import BaseModel, Provider, Model, ChatMessage
+from llmchat.requests_responses import (
     ChatRequest,
     ChatUpdateRequest,
     ChatResponse,
@@ -23,13 +23,13 @@ from aichatui.requests_responses import (
     ProviderResponse,
     ProviderRequest,
 )
-from aichatui.celery_utils import celery_app
-import aichatui.services.chat
-import aichatui.services.chat_message
-import aichatui.services.models
-import aichatui.services.provider
-import aichatui.selectors.chat
-import aichatui.selectors.model
+from llmchat.celery_utils import celery_app
+import llmchat.services.chat
+import llmchat.services.chat_message
+import llmchat.services.models
+import llmchat.services.provider
+import llmchat.selectors.chat
+import llmchat.selectors.model
 
 
 @asynccontextmanager
@@ -47,7 +47,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-celery_app.autodiscover_tasks(["aichatui"])
+celery_app.autodiscover_tasks(["llmchat"])
 
 
 @app.post("/providers", response_model=ProviderResponse)
@@ -85,7 +85,7 @@ def provider_update(
     if not provider:
         raise HTTPException(status_code=404, detail="Provider not found")
 
-    provider = aichatui.services.provider.update(
+    provider = llmchat.services.provider.update(
         provider=provider,
         url=provider_request.url,
         api_key=provider_request.api_key,
@@ -101,7 +101,7 @@ def provider_delete(provider_id: int, db: Session = Depends(get_db)):
     if not provider:
         raise HTTPException(status_code=404, detail="Provider not found")
 
-    aichatui.services.provider.delete(provider=provider, db=db)
+    llmchat.services.provider.delete(provider=provider, db=db)
 
     return Response(status_code=204)
 
@@ -138,7 +138,7 @@ def model_update(
     if not model:
         raise HTTPException(status_code=404, detail="Provider not found")
 
-    model = aichatui.services.models.update(
+    model = llmchat.services.models.update(
         model=model,
         name=model_request.name,
         alias=model_request.alias,
@@ -155,14 +155,14 @@ def model_delete(model_id: int, db: Session = Depends(get_db)):
     if not model:
         raise HTTPException(status_code=404, detail="Model not found")
 
-    aichatui.services.models.delete(model=model, db=db)
+    llmchat.services.models.delete(model=model, db=db)
 
     return Response(status_code=204)
 
 
 @app.post("/chat-message", response_model=ChatResponse)
 async def chat_new_message(chat_request: ChatRequest, db: Session = Depends(get_db)):
-    model = aichatui.selectors.model.active_by_id(model_id=chat_request.model_id, db=db)
+    model = llmchat.selectors.model.active_by_id(model_id=chat_request.model_id, db=db)
     if not model:
         raise HTTPException(status_code=404, detail="Model not found")
 
@@ -174,8 +174,8 @@ async def chat_new_message(chat_request: ChatRequest, db: Session = Depends(get_
     else:
         parent_message_id = None
 
-    chat = aichatui.services.chat.get_or_create(chat_id=chat_request.chat_id, db=db)
-    aichatui.services.chat_message.create(
+    chat = llmchat.services.chat.get_or_create(chat_id=chat_request.chat_id, db=db)
+    llmchat.services.chat_message.create(
         chat=chat,
         parent_id=parent_message_id,
         model_id=model.id,
@@ -188,12 +188,12 @@ async def chat_new_message(chat_request: ChatRequest, db: Session = Depends(get_
 
 @app.get("/chats", response_model=list[ChatListResponse])
 async def chats_list(db: Session = Depends(get_db)):
-    return aichatui.selectors.chat.get_list(db=db)
+    return llmchat.selectors.chat.get_list(db=db)
 
 
 @app.get("/chats/{chat_id}", response_model=ChatResponse)
 async def chat_details(request: Request, chat_id: int, db: Session = Depends(get_db)):
-    chat = aichatui.selectors.chat.get_with_message(chat_id=chat_id, db=db)
+    chat = llmchat.selectors.chat.get_with_message(chat_id=chat_id, db=db)
 
     if not chat:
         return Response(status_code=404)
@@ -205,8 +205,8 @@ async def chat_details(request: Request, chat_id: int, db: Session = Depends(get
 async def chat_update(
     chat_update_request: ChatUpdateRequest, chat_id: int, db: Session = Depends(get_db)
 ):
-    chat = aichatui.selectors.chat.get_with_message(chat_id=chat_id, db=db)
-    chat = aichatui.services.chat.update(
+    chat = llmchat.selectors.chat.get_with_message(chat_id=chat_id, db=db)
+    chat = llmchat.services.chat.update(
         chat=chat, title=chat_update_request.title, db=db
     )
 
@@ -215,8 +215,8 @@ async def chat_update(
 
 @app.delete("/chats/{chat_id}", response_model=ChatResponse)
 async def chat_delete(request: Request, chat_id: int, db: Session = Depends(get_db)):
-    chat = aichatui.selectors.chat.get_with_message(chat_id=chat_id, db=db)
-    aichatui.services.chat.delete(chat=chat, db=db)
+    chat = llmchat.selectors.chat.get_with_message(chat_id=chat_id, db=db)
+    llmchat.services.chat.delete(chat=chat, db=db)
 
     return Response(status_code=204)
 
@@ -247,7 +247,7 @@ async def chat_message_cancel(message_id: int, db: Session = Depends(get_db)):
     if not chat_message:
         raise HTTPException(status_code=404, detail="Chat message not found")
 
-    aichatui.services.chat_message.cancel(chat_message=chat_message, db=db)
+    llmchat.services.chat_message.cancel(chat_message=chat_message, db=db)
 
     return Response(status_code=204)
 

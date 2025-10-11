@@ -6,7 +6,7 @@ import datetime
 from sqlalchemy import ForeignKey, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from aichatui.database import Base
+from llmchat.database import Base
 
 
 class BaseModel(Base):

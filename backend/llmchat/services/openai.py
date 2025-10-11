@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 import enum
 from openai import OpenAI
-from aichatui.models import Model
+from llmchat.models import Model
 
 
 @dataclass

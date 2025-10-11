@@ -4,13 +4,13 @@ from typing import Optional
 from celery.contrib.abortable import AbortableAsyncResult
 from sqlalchemy.orm import Session
 
-from aichatui.config import settings
-from aichatui.celery_utils import celery_app
-from aichatui.models import Chat, ChatMessage
-from aichatui.tasks import run_chat_completion
-from aichatui.models import ChatMessage
-from aichatui.services.event_stream import PubSubProducer, EventType
-from aichatui.services.openai import Roles
+from llmchat.config import settings
+from llmchat.celery_utils import celery_app
+from llmchat.models import Chat, ChatMessage
+from llmchat.tasks import run_chat_completion
+from llmchat.models import ChatMessage
+from llmchat.services.event_stream import PubSubProducer, EventType
+from llmchat.services.openai import Roles
 
 
 def create(
