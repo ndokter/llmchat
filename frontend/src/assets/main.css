@@ -13,20 +13,31 @@ pre code.hljs {
 
 .sidebar {
     flex: 1;
-    background: #140079ff;
+    background: rgb(16, 0, 99);
     max-height: 100vh;
     color: #fff;
     padding: 20px 10px;
     overflow-y: scroll;
 
   .sidebar-section {
-    border: 1px solid #fff;
-    margin-bottom: 20px;
+    padding: 10px 0;
+    transform: translateY(-2px);
+    margin-bottom: 10px;
+  }
+
+  .sidebar-action {
+    padding-left: 40px !important;
+    .icon {
+      position: absolute;
+      left: 10px;
+      top: 16px;
+    }
   }
 
   .sidebar-title {
     font-weight: 600;
     font-size: 14px;
+    position: relative;
   }
 
   ul {
@@ -34,11 +45,17 @@ pre code.hljs {
     padding-left: 0;
     margin-left: 0;
   }
-  li, .sidebar-item, .sidebar-title {
-    margin-bottom: 3px;
-    padding: 2px 10px;
+  .sidebar-title {
+    margin-bottom: 5px;
+  }
+  .sidebar-item, .sidebar-title {
+    padding: 3px 10px;
     border-radius: 3px;
   }
+  .sidebar-item {
+    /* margin-bottom: 3px; */
+  }
+
   li:hover, li.selected,
   .sidebar-item:hover {
     background: #2200cb;

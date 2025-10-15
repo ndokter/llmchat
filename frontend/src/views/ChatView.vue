@@ -23,8 +23,8 @@ import Chat from '../components/Chat.vue'
 }
 
 .sidebar-wrapper {
-  width: 200px;
-  flex: 0 0 200px;
+  width: 250px;
+  flex: 0 0 250px;
   background: #140079ff;
   height: 100vh;
   overflow-y: auto;
