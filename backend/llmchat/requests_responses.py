@@ -45,8 +45,6 @@ class ChatMessageResponse(BaseModel):
 
     chat_id: int
     model_id: Optional[int] = None
-    # model_name: str
-    # model_alias: Optional[str] = None
     model: Optional[ModelResponse] = None
     task_id: Optional[str] = None
     parent_id: Optional[int] = None
