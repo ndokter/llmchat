@@ -113,7 +113,6 @@ onUnmounted(() => {
     background: #fff;
     position: relative;
     padding-bottom: 20px;
-    /* background: #ccc; */
     height: 100%;
     display: flex;
     flex-direction: column;
