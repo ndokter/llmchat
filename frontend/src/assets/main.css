@@ -13,7 +13,9 @@ pre code.hljs {
 
 .sidebar {
     flex: 1;
-    background: rgb(16, 0, 99);
+    /* background: rgb(0, 13, 85); */
+    /* background: rgb(60, 1, 1); */
+    background: rgb(0, 35, 61);
     max-height: 100vh;
     color: #fff;
     padding: 20px 10px;
@@ -60,7 +62,9 @@ pre code.hljs {
 
   li:hover, li.selected,
   .sidebar-item:hover {
-    background: #2200cb;
+    /* background: #2200cb; */
+    /* background: #680000; */
+    background: #004173;
     cursor: pointer;
   }
   a {
