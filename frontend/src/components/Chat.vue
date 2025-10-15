@@ -65,6 +65,7 @@ const loadChat = async (id: any) => {
   })
   if (response.ok) {
     chat.value = await response.json()
+    // console.log(chat)
   }
 }
 
@@ -120,7 +121,7 @@ onUnmounted(() => {
 #chat-messages {
     overflow-y: scroll;
     max-height: calc(100vh - 0px);
-    padding: 10px;
+    padding: 10px 0;
 }
 #chat-input {
     position: absolute;

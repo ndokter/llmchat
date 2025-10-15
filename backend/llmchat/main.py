@@ -6,7 +6,7 @@ import json
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from fastapi.responses import StreamingResponse
 
 from llmchat.config import settings
@@ -225,7 +225,10 @@ async def chat_delete(request: Request, chat_id: int, db: Session = Depends(get_
 async def chat_message_details(
     request: Request, message_id: int, db: Session = Depends(get_db)
 ):
-    chat_message = db.get(ChatMessage, message_id)
+    chat_message = db.query(ChatMessage) \
+        .options(joinedload(ChatMessage.model)) \
+        .get(message_id)
+
     return chat_message
 
 
