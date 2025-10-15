@@ -1,22 +1,25 @@
 <script setup lang="ts">
 import ChatsList from './ChatsList.vue'
+import router from '@/router'
 
-
+const makeNewChat = () => {
+    router.push({name: 'home'})
+}
 </script>
 
 <template>
     <div class="sidebar">
-        <ChatsList />
+        <div class="sidebar-section">
+            <div @click="makeNewChat" class="sidebar-item">New chat</div>
+        </div>
+
+        <div class="sidebar-section">
+            <div class="sidebar-title">Chats</div>
+            <ChatsList />
+        </div>
     </div>
 </template>
 
 <style scoped>
-.sidebar {
-    flex: 1;
-    background: #140079ff;
-    max-height: 100vh;
-    color: #fff;
-    padding: 20px 10px;
-    overflow-y: scroll;
-}
+
 </style>

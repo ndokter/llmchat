@@ -53,21 +53,4 @@ const getChatHistory = async () => {
 
 <style scoped>
 
-ul {
-  list-style: none;
-  padding-left: 0;
-  margin-left: 0;
-}
-li {
-  margin-bottom: 3px;
-  padding: 2px 10px;
-  border-radius: 3px;
-}
-li:hover, li.selected {
-  background: #2200cb
-}
-a {
-  text-decoration: none;
-  color: #fff
-}
 </style>

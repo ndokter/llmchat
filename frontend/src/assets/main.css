@@ -10,3 +10,42 @@
 pre code.hljs {
   padding: 0;
 }
+
+.sidebar {
+    flex: 1;
+    background: #140079ff;
+    max-height: 100vh;
+    color: #fff;
+    padding: 20px 10px;
+    overflow-y: scroll;
+
+  .sidebar-section {
+    border: 1px solid #fff;
+    margin-bottom: 20px;
+  }
+
+  .sidebar-title {
+    font-weight: 600;
+    font-size: 14px;
+  }
+
+  ul {
+    list-style: none;
+    padding-left: 0;
+    margin-left: 0;
+  }
+  li, .sidebar-item, .sidebar-title {
+    margin-bottom: 3px;
+    padding: 2px 10px;
+    border-radius: 3px;
+  }
+  li:hover, li.selected,
+  .sidebar-item:hover {
+    background: #2200cb;
+    cursor: pointer;
+  }
+  a {
+    text-decoration: none;
+    color: #fff
+  }
+}
