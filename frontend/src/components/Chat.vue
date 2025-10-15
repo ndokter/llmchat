@@ -71,7 +71,11 @@ const loadChat = async (id: any) => {
 watch(
   () => route.params.id,
   (chatId) => {
-    if (chatId) loadChat(chatId)
+    if (chatId) {
+      loadChat(chatId)
+    } else {
+      chat.value = {}
+    }
   },
   { immediate: true }
 )
