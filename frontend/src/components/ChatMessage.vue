@@ -37,16 +37,27 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <div v-html="markdownMessage" :class="{'is-user': props.message.role == 'user'}" class="markdown-body"></div>
+  <div class="chat-message-container">
+    <div v-html="markdownMessage" :class="{'is-user': props.message.role == 'user'}" class="chat-message markdown-body"></div>
+  </div>
 </template>
 
 <style scoped>
+.chat-message-container {
+    display: grid;
+    justify-items: end;
+}
+
 .chat-message {
     margin: 10px;
-    padding: 10px;
+    padding: 10px 15px;
     background: #fff;
+    border-radius: 10px;
 }
 .chat-message.is-user {
-    background: #ccc;
+    background: #eeeeee;
+    max-width: 70%;
+    margin-right: 25px;
+    margin-left: auto;
 }
 </style>
