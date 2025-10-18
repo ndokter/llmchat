@@ -39,7 +39,7 @@ const formatDate = (isoString: string) => {
   if (startOfInputDate.getTime() === startOfToday.getTime()) {
     return `today ${formattedTime}`;
   } else if (startOfInputDate.getTime() === startOfYesterday.getTime()) {
-    return `Yesterday at ${formattedTime}`;
+    return `yesterday at ${formattedTime}`;
   } else {
     const month = (date.getMonth() + 1).toString().padStart(2, '0');
     const day = date.getDate().toString().padStart(2, '0');
@@ -107,6 +107,7 @@ onUnmounted(() => {
     .chat-body.user {
       background: #eeeeee;
       max-width: 70%;
+      
       margin-right: 25px;
       margin-left: auto;
       justify-items: end;

@@ -99,11 +99,21 @@ onUnmounted(() => {
             <ChatMessage v-for="message in chat.messages" :message="message" />
         </div>
 
-        <div id="chat-input">
-            <form @submit.prevent="sendMessage">
-                <input type="text" name="query" placeholder="Enter message.." />
-            </form>
-        </div>
+            <div id="chat-input">
+                <form @submit.prevent="sendMessage">
+                    <textarea 
+                        name="query"
+                        placeholder="Enter message.." 
+                        rows="1"
+                    ></textarea>
+                    <button class="send-button">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                        <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+
+                </form>
+            </div>
     </div>
 </template>
 
@@ -112,26 +122,45 @@ onUnmounted(() => {
     flex: 1;
     background: #fff;
     position: relative;
-    padding-bottom: 20px;
+    /* padding-bottom: 100px; */
     height: 100%;
     display: flex;
     flex-direction: column;
+    margin-left: 50px;
+    margin-right: 50px;
 }
 #chat-messages {
     overflow-y: scroll;
     max-height: calc(100vh - 0px);
-    padding: 10px 0;
+    padding: 10px 0 100px 0;
 }
+
 #chat-input {
+    display: flex;
+    align-items: flex-end;
+    padding: 12px 10px;
+    border: 1px solid #e5e7eb;
+    border-radius: .75rem;
+    background: white;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    transition: box-shadow 0.2s ease;
     position: absolute;
-    bottom: 0;
-    width: 100%;
-    height: 100px;
-    background: #666
+    bottom: 15px;
+    left: 15px;
+    right: 15px;
 }
-    #chat-input input {
-        width: 100%;
-        padding:10px;
+    #chat-input textarea {
+        flex: 1;
+        border: none;
+        outline: none;
+        resize: none;
+        font-size: 16px;
+        line-height: 1.5;
+        max-height: 200px;
+        overflow-y: auto;
     }
 
+    #chat-input textarea::placeholder {
+        color: #9ca3af;
+    }
 </style>
