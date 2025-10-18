@@ -101,18 +101,27 @@ onUnmounted(() => {
 
         <div id="chat-input">
             <form @submit.prevent="sendMessage">
-                <textarea 
-                    name="query"
-                    placeholder="Enter message.." 
-                    rows="1"
-                ></textarea>
-                <button class="send-button">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                    <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </button>
+                <div class="textarea-container">
+                    <textarea
+                        name="query"
+                        placeholder="Enter message.."
+                        rows="1"
+                    ></textarea>
+                </div>
+                <div class="actions">
+                    <select id="fruit-select" name="fruit">
+                        <option value="Llama 3.2">Llama 3.2</option>
+                        <option value="Chat GPT 5">Chat GPT 5</option>
+                        <option value="Gemini 2.5 Flash">Gemini 2.5 Flash</option>
+                    </select>                  
+                    <button class="send-button">
+                        send
+                        <!-- <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                        <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg> -->
+                    </button>
+                </div>
             </form>
-            <div class="actions">actions</div>
         </div>
     </div>
 </template>
@@ -129,14 +138,14 @@ onUnmounted(() => {
 }
 #chat-messages {
     overflow-y: scroll;
-    flex-grow: 1; /* Allow chat messages to take up available vertical space */
+    flex-grow: 1;
     padding: 10px 0 0 0;
-    min-height: 0; /* Prevent flex item from overflowing */
+    min-height: 0;
 }
 
 #chat-input {
     display: flex;
-    align-items: flex-end;
+    flex-direction: column;
     padding: 5px 10px 20px 10px;
     border: 1px solid #e5e7eb;
     border-radius: .75rem;
@@ -144,6 +153,12 @@ onUnmounted(() => {
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
     transition: box-shadow 0.2s ease;
     margin: 0 15px 15px 15px;
+}
+.textarea-container {
+    display: flex;
+    align-items: flex-end;
+    width: 100%;
+    margin-bottom: 10px;
 }
     #chat-input textarea {
         flex: 1;
@@ -154,9 +169,19 @@ onUnmounted(() => {
         line-height: 1.5;
         max-height: 200px;
         overflow-y: auto;
+        width: 100%;
+    }
+    
+    .actions {
+        width: 100%;
+        padding: 8px 0;
+        color: #6b7280;
+        font-size: 14px;
     }
 
     #chat-input textarea::placeholder {
         color: #9ca3af;
     }
+
+    
 </style>
