@@ -99,21 +99,21 @@ onUnmounted(() => {
             <ChatMessage v-for="message in chat.messages" :message="message" />
         </div>
 
-            <div id="chat-input">
-                <form @submit.prevent="sendMessage">
-                    <textarea 
-                        name="query"
-                        placeholder="Enter message.." 
-                        rows="1"
-                    ></textarea>
-                    <button class="send-button">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                        <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                    </button>
-
-                </form>
-            </div>
+        <div id="chat-input">
+            <form @submit.prevent="sendMessage">
+                <textarea 
+                    name="query"
+                    placeholder="Enter message.." 
+                    rows="1"
+                ></textarea>
+                <button class="send-button">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+            </form>
+            <div class="actions">actions</div>
+        </div>
     </div>
 </template>
 
@@ -121,8 +121,6 @@ onUnmounted(() => {
 .chat {
     flex: 1;
     background: #fff;
-    position: relative;
-    /* padding-bottom: 100px; */
     height: 100%;
     display: flex;
     flex-direction: column;
@@ -131,23 +129,21 @@ onUnmounted(() => {
 }
 #chat-messages {
     overflow-y: scroll;
-    max-height: calc(100vh - 0px);
-    padding: 10px 0 100px 0;
+    flex-grow: 1; /* Allow chat messages to take up available vertical space */
+    padding: 10px 0 0 0;
+    min-height: 0; /* Prevent flex item from overflowing */
 }
 
 #chat-input {
     display: flex;
     align-items: flex-end;
-    padding: 12px 10px;
+    padding: 5px 10px 20px 10px;
     border: 1px solid #e5e7eb;
     border-radius: .75rem;
     background: white;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
     transition: box-shadow 0.2s ease;
-    position: absolute;
-    bottom: 15px;
-    left: 15px;
-    right: 15px;
+    margin: 0 15px 15px 15px;
 }
     #chat-input textarea {
         flex: 1;
