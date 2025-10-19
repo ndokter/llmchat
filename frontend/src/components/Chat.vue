@@ -109,17 +109,21 @@ onUnmounted(() => {
                     ></textarea>
                 </div>
                 <div class="actions">
-                    <select id="fruit-select" name="fruit">
-                        <option value="Llama 3.2">Llama 3.2</option>
-                        <option value="Chat GPT 5">Chat GPT 5</option>
-                        <option value="Gemini 2.5 Flash">Gemini 2.5 Flash</option>
-                    </select>                  
-                    <button class="send-button">
-                        send
-                        <!-- <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                        <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg> -->
-                    </button>
+                    <span class="action">
+                        <select id="fruit-select" name="fruit">
+                            <option value="Llama 3.2">Llama 3.2</option>
+                            <option value="Chat GPT 5">Chat GPT 5</option>
+                            <option value="Gemini 2.5 Flash">Gemini 2.5 Flash</option>
+                        </select>           
+                    </span>    
+                    <span class="action">
+                        <button class="send-button">
+                            send
+                            <!-- <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                            <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg> -->
+                        </button>
+                    </span>
                 </div>
             </form>
         </div>
@@ -146,11 +150,11 @@ onUnmounted(() => {
 #chat-input {
     display: flex;
     flex-direction: column;
-    padding: 5px 10px 20px 10px;
-    border: 1px solid #e5e7eb;
+    padding: 10px 10px 2px 10px;
+    outline: 1px solid #d8d8d8;
     border-radius: .75rem;
     background: white;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    box-shadow: 1px 2px 3px rgba(80, 80, 80, 0.05);
     transition: box-shadow 0.2s ease;
     margin: 0 15px 15px 15px;
 }
@@ -177,6 +181,11 @@ onUnmounted(() => {
         padding: 8px 0;
         color: #6b7280;
         font-size: 14px;
+        display: inline-block;
+
+        .action {
+            margin-right: 10px;
+        }
     }
 
     #chat-input textarea::placeholder {

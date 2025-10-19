@@ -18,18 +18,23 @@ pre code.hljs {
 
 button, select {
   border-radius: 5px;
-  outline: none;
+  outline: 1px solid #ccc;
   padding: 7px;
-  background: var(--input-background-color);
+  /* background: var(--input-background-color); */
+  background: #fff;
   border: none;
-  color: #fff;
+  color: #000;
 }
-
+button:hover, select:hover, option:hover {
+  cursor: pointer;
+}
 select {
   border-radius: 5px;
   padding: 7px 0 7px 10px;
 }
-
+  select:focus option:checked {
+    color: #fff !important;
+  }
 
 .sidebar {
   flex: 1;
