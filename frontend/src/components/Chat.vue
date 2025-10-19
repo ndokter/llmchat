@@ -4,6 +4,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useEventStore, type EventData, type EventHandler } from '@/stores/eventStore'
 import router from '@/router'
 import ChatMessage from '../components/ChatMessage.vue'
+import ChatInput from '../components/ChatInput.vue'
 
 const route = useRoute()
 const eventStore = useEventStore()
@@ -32,19 +33,14 @@ const eventStreamHandler = (e: EventData) => {
     }
 }
 
-const sendMessage = (submitEvent: Event) => {
-    const form = submitEvent.target as HTMLFormElement
-    const queryInput = form?.elements.namedItem('query') as HTMLInputElement
-    
-    if (!queryInput) return
-    
+const sendMessage = (formData: { query: string, model: string }) => {
     fetch(`${import.meta.env.VITE_API_URL}/chat-message`, {
         method: "POST",
         body: JSON.stringify({
             "chat_id": route.params.id ?? null,
             "model_id": 1,
             "parent_id": null,
-            "message": queryInput.value
+            "message": formData.query
         }),
         headers: {"Content-Type": "application/json"}
     })
@@ -99,34 +95,7 @@ onUnmounted(() => {
             <ChatMessage v-for="message in chat.messages" :message="message" />
         </div>
 
-        <div id="chat-input">
-            <form @submit.prevent="sendMessage">
-                <div class="textarea-container">
-                    <textarea
-                        name="query"
-                        placeholder="Enter message.."
-                        rows="1"
-                    ></textarea>
-                </div>
-                <div class="actions">
-                    <span class="action">
-                        <select id="fruit-select" name="fruit">
-                            <option value="Llama 3.2">Llama 3.2</option>
-                            <option value="Chat GPT 5">Chat GPT 5</option>
-                            <option value="Gemini 2.5 Flash">Gemini 2.5 Flash</option>
-                        </select>           
-                    </span>    
-                    <span class="action">
-                        <button class="send-button">
-                            send
-                            <!-- <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                            <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                            </svg> -->
-                        </button>
-                    </span>
-                </div>
-            </form>
-        </div>
+        <ChatInput @submit="sendMessage" />
     </div>
 </template>
 
@@ -146,51 +115,4 @@ onUnmounted(() => {
     padding: 10px 0 0 0;
     min-height: 0;
 }
-
-#chat-input {
-    display: flex;
-    flex-direction: column;
-    padding: 10px 10px 2px 10px;
-    outline: 1px solid #d8d8d8;
-    border-radius: .75rem;
-    background: white;
-    box-shadow: 1px 2px 3px rgba(80, 80, 80, 0.05);
-    transition: box-shadow 0.2s ease;
-    margin: 0 15px 15px 15px;
-}
-.textarea-container {
-    display: flex;
-    align-items: flex-end;
-    width: 100%;
-    margin-bottom: 10px;
-}
-    #chat-input textarea {
-        flex: 1;
-        border: none;
-        outline: none;
-        resize: none;
-        font-size: 16px;
-        line-height: 1.5;
-        max-height: 200px;
-        overflow-y: auto;
-        width: 100%;
-    }
-    
-    .actions {
-        width: 100%;
-        padding: 8px 0;
-        color: #6b7280;
-        font-size: 14px;
-        display: inline-block;
-
-        .action {
-            margin-right: 10px;
-        }
-    }
-
-    #chat-input textarea::placeholder {
-        color: #9ca3af;
-    }
-
-    
 </style>
