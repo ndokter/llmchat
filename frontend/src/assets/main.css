@@ -11,7 +11,10 @@
   display: flex;
   height: 100vh;
 }
-
+a {
+  text-decoration: none;
+  color: #fff
+}
 pre code.hljs {
   padding: 0;
 }
@@ -39,8 +42,8 @@ select {
 .sidebar {
   flex: 1;
   /* background: rgb(0, 13, 85); */
-  /* background: rgb(60, 1, 1); */
-  background: rgb(0, 35, 61);
+  background: #3c0101;
+  /* background: rgb(0, 35, 61); */
   max-height: 100vh;
   color: #fff;
   padding: 20px 10px;
@@ -65,33 +68,25 @@ select {
     font-weight: 600;
     font-size: 14px;
     position: relative;
-  }
-
-  ul {
-    list-style: none;
-    padding-left: 0;
-    margin-left: 0;
-  }
-  .sidebar-title {
     margin-bottom: 5px;
+    padding: 3px 5px;
   }
-  .sidebar-item, .sidebar-title {
-    padding: 3px 10px;
+  .sidebar-item, .sidebar-title {  
     border-radius: 3px;
   }
-  .sidebar-item a div{
+  
+  .sidebar-item a div, .sidebar-action {
+    padding: 3px 5px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
-  li:hover, li.selected,
+  .sidebar-item.selected,
   .sidebar-item:hover {
-    background: #004173;
+    background: #730000;
+    /* background: rgba(60, 1, 1, 0.613); */
     cursor: pointer;
   }
-  a {
-    text-decoration: none;
-    color: #fff
-  }
+
 }
