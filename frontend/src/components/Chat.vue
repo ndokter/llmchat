@@ -38,7 +38,7 @@ const sendMessage = (formData: { query: string, model: string }) => {
         method: "POST",
         body: JSON.stringify({
             "chat_id": route.params.id ?? null,
-            "model_id": 1,
+            "model_id": formData.model,
             "parent_id": null,
             "message": formData.query
         }),

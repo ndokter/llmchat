@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { useModelsStore } from '@/stores/modelStore'
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 
 const emit = defineEmits(['submit'])
 
 const modelsStore = useModelsStore()
 const query = ref('')
-const model = ref('Llama 3.2')
+const selectedModel = ref()
 
 onMounted(() => {
   if (modelsStore.models.length === 0) {
@@ -14,22 +14,27 @@ onMounted(() => {
   }
 })
 
+watch(() => modelsStore.models, (newModels) => {
+  if (newModels.length > 0 && !selectedModel.value) {
+    selectedModel.value = newModels[0].id
+  }
+})
+
 const handleSubmit = (e: Event) => {
   e.preventDefault()
+  console.log({ query: query.value, model: selectedModel.value })
   if (query.value.trim()) {
-    emit('submit', { query: query.value, model: model.value })
+    emit('submit', { query: query.value, model: selectedModel.value })
     query.value = ''
   }
 }
 const handleInput = (e: Event) => {
-  const textarea = e.target
-  if (!textarea) return
+  const target = e.target as HTMLTextAreaElement
+  if (!target) return
 
   // Text area vertical resizing
-  textarea.addEventListener('input', function() {
-  textarea.style.height = 'auto';
-  textarea.style.height = Math.min(textarea.scrollHeight, 450) + 'px';
-  });
+  target.style.height = 'auto';
+  target.style.height = Math.min(target.scrollHeight, 450) + 'px';
 }
 </script>
 
@@ -47,8 +52,12 @@ const handleInput = (e: Event) => {
       </div>
       <div class="actions">
         <span class="action">
-          <select v-for="model in modelsStore.models" :key="model.id" id="model-select" name="model">
-            <option :value="model.id">{{ model.alias || model.name }}</option>
+          <select v-model="selectedModel" id="model-select" name="model">
+            <option 
+            v-for="modelItem in modelsStore.models" 
+            :key="modelItem.id" 
+            :value="modelItem.id"
+            >{{ modelItem.alias || modelItem.name }}</option>
           </select>
         </span>    
         <span class="action">
