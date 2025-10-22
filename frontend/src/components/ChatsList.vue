@@ -40,7 +40,7 @@ const getChatHistory = async () => {
 <template>
   <div class="chats-list">
     <ul>
-      <li v-for="(chat in chatHistory" :key="chat.id" class="sidebar-item" :class="{selected: route.params.id == chat.id }">
+      <li v-for="chat in chatHistory" :key="chat.id" class="sidebar-item" :class="{selected: route.params.id == chat.id }">
         <RouterLink :to="{name: 'chat', params: {id: chat.id}}">
           <div v-if="!chat.title">New chat</div>
           <div v-else>{{ chat.title }}</div>

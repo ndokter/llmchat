@@ -1,10 +1,18 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { useModelsStore } from '@/stores/modelStore'
+import { onMounted, ref } from 'vue'
 
 const emit = defineEmits(['submit'])
 
+const modelsStore = useModelsStore()
 const query = ref('')
 const model = ref('Llama 3.2')
+
+onMounted(() => {
+  if (modelsStore.models.length === 0) {
+    modelsStore.fetchModels()
+  }
+})
 
 const handleSubmit = (e: Event) => {
   e.preventDefault()
@@ -15,7 +23,6 @@ const handleSubmit = (e: Event) => {
 }
 const handleInput = (e: Event) => {
   const textarea = e.target
-
   if (!textarea) return
 
   // Text area vertical resizing
@@ -40,11 +47,9 @@ const handleInput = (e: Event) => {
       </div>
       <div class="actions">
         <span class="action">
-          <select v-model="model" id="model-select" name="model">
-            <option value="Llama 3.2">Llama 3.2</option>
-            <option value="Chat GPT 5">Chat GPT 5</option>
-            <option value="Gemini 2.5 Flash">Gemini 2.5 Flash</option>
-          </select>           
+          <select v-for="model in modelsStore.models" :key="model.id" id="model-select" name="model">
+            <option :value="model.id">{{ model.alias || model.name }}</option>
+          </select>
         </span>    
         <span class="action">
           <button type="submit" class="send-button">send</button>
